@@ -14,7 +14,6 @@ import type {
 } from '@/types'
 import {
   getDaysInRange,
-  isDateInPast,
   isDateDone,
   toYMD,
   getWeekLabel,
