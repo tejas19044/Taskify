@@ -39,7 +39,7 @@ export default function LoginPage() {
             <Rocket className="h-7 w-7 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-slate-900">Moonshot</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Taskify</h1>
             <p className="text-sm text-slate-500">Personal task planning board</p>
           </div>
         </div>

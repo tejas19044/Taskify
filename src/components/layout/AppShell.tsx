@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { storageGet, storageSet } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 
-const COLLAPSED_KEY = 'moonshot:sidebarCollapsed'
+const COLLAPSED_KEY = 'taskify:sidebarCollapsed'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { currentUser, logout } = useAuth()

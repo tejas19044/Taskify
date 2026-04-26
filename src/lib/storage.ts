@@ -29,11 +29,11 @@ export function storageDelete(key: string): void {
 }
 
 export const STORAGE_KEYS = {
-  USERS: 'moonshot:users',
-  TASKS: 'moonshot:tasks',
-  SETTINGS: 'moonshot:settings',
-  PRIORITY_LABELS: 'moonshot:priorityLabels',
-  PRIORITIES: 'moonshot:priorities',
-  CURRENT_USER_ID: 'moonshot:currentUserId',
-  SEEDED: 'moonshot:seeded',
+  USERS: 'taskify:users',
+  TASKS: 'taskify:tasks',
+  SETTINGS: 'taskify:settings',
+  PRIORITY_LABELS: 'taskify:priorityLabels',
+  PRIORITIES: 'taskify:priorities',
+  CURRENT_USER_ID: 'taskify:currentUserId',
+  SEEDED: 'taskify:seeded',
 } as const
