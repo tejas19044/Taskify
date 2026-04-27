@@ -8,7 +8,7 @@ export interface Task {
   userId: string
   title: string
   description: string
-  scheduledDate: string // YYYY-MM-DD
+  scheduledDate: string | null // YYYY-MM-DD, or null when unscheduled (Pending)
   estimatedHours: number
   labelId: string
   priorityId: string

@@ -44,8 +44,8 @@ export function computeWeeklyTrend(tasks: Task[], weeks: number = 8): WeeklyTren
   for (let i = weeks - 1; i >= 0; i--) {
     const weekStart = startOfWeek(subWeeks(today, i), { weekStartsOn: 1 })
     const weekDays = Array.from({ length: 7 }, (_, j) => toYMD(addDays(weekStart, j)))
-    const weekTasks = tasks.filter((t) => weekDays.includes(t.scheduledDate))
-    const completedTasks = weekTasks.filter((t) => isDateDone(t.scheduledDate))
+    const weekTasks = tasks.filter((t) => t.scheduledDate !== null && weekDays.includes(t.scheduledDate))
+    const completedTasks = weekTasks.filter((t) => isDateDone(t.scheduledDate!))
     result.push({
       week: getWeekLabel(weekStart),
       totalHours: weekTasks.reduce((sum, t) => sum + t.estimatedHours, 0),
@@ -58,7 +58,7 @@ export function computeWeeklyTrend(tasks: Task[], weeks: number = 8): WeeklyTren
 
 export function computeTagBreakdown(tasks: Task[], start: string, end: string): TagBreakdown[] {
   const days = getDaysInRange(start, end)
-  const rangedTasks = tasks.filter((t) => days.includes(t.scheduledDate))
+  const rangedTasks = tasks.filter((t) => t.scheduledDate !== null && days.includes(t.scheduledDate))
   const map = new Map<string, { hours: number; count: number }>()
   for (const task of rangedTasks) {
     for (const tag of task.tags) {
@@ -79,7 +79,7 @@ export function computeLabelBreakdown(
   end: string
 ): PriorityBreakdown[] {
   const days = getDaysInRange(start, end)
-  const rangedTasks = tasks.filter((t) => days.includes(t.scheduledDate) && isDateDone(t.scheduledDate))
+  const rangedTasks = tasks.filter((t) => t.scheduledDate !== null && days.includes(t.scheduledDate) && isDateDone(t.scheduledDate))
   const map = new Map<string, { hours: number; count: number }>()
   for (const task of rangedTasks) {
     const id = task.labelId || ''
@@ -112,7 +112,7 @@ export function computePriorityLevelBreakdown(
   end: string
 ): PriorityBreakdown[] {
   const days = getDaysInRange(start, end)
-  const rangedTasks = tasks.filter((t) => days.includes(t.scheduledDate) && isDateDone(t.scheduledDate))
+  const rangedTasks = tasks.filter((t) => t.scheduledDate !== null && days.includes(t.scheduledDate) && isDateDone(t.scheduledDate))
   const map = new Map<string, { hours: number; count: number }>()
   for (const task of rangedTasks) {
     if (!task.priorityId) continue
@@ -141,12 +141,12 @@ export function computeSummary(
 ): AnalyticsSummary {
   const daily = computeDailyWorkload(tasks, start, end, dailyCapacity)
   const days = getDaysInRange(start, end)
-  const rangeTasks = tasks.filter((t) => days.includes(t.scheduledDate))
-  const rangeCompletedTasks = rangeTasks.filter((t) => isDateDone(t.scheduledDate))
+  const rangeTasks = tasks.filter((t) => t.scheduledDate !== null && days.includes(t.scheduledDate))
+  const rangeCompletedTasks = rangeTasks.filter((t) => isDateDone(t.scheduledDate!))
 
   // Streak: consecutive past days ending yesterday where at least 1 task was scheduled
   const completedDateSet = new Set(
-    tasks.filter((t) => isDateDone(t.scheduledDate)).map((t) => t.scheduledDate)
+    tasks.filter((t) => t.scheduledDate !== null && isDateDone(t.scheduledDate)).map((t) => t.scheduledDate)
   )
   let streak = 0
   let cursor = subDays(new Date(), 1)

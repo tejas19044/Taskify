@@ -23,6 +23,7 @@ export function WeekView({ date, tasks, labels, workingMode, onDateClick, onTask
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>()
     for (const task of tasks) {
+      if (task.scheduledDate === null) continue
       const existing = map.get(task.scheduledDate) ?? []
       map.set(task.scheduledDate, [...existing, task])
     }

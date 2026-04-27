@@ -16,6 +16,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { ChevronLeft, ChevronRight, CalendarDays, LayoutGrid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BoardColumn } from './BoardColumn'
+import { PendingColumn, PENDING_COLUMN_ID } from './PendingColumn'
 import { TaskCard } from './TaskCard'
 import { AddTaskDialog } from './AddTaskDialog'
 import { EditTaskDialog } from './EditTaskDialog'
@@ -44,6 +45,7 @@ export function BoardPage() {
 
   const [weekAnchor, setWeekAnchor] = useState(new Date())
   const [addDialogDate, setAddDialogDate] = useState<string | null>(null)
+  const [addDialogPending, setAddDialogPending] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
@@ -72,6 +74,11 @@ export function BoardPage() {
     return map
   }, [displayTasks, colDates])
 
+  const pendingTasks = useMemo(
+    () => displayTasks.filter((t) => t.scheduledDate === null),
+    [displayTasks]
+  )
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const task = tasks.find((t) => t.id === event.active.id)
     setActiveTask(task ?? null)
@@ -87,12 +94,17 @@ export function BoardPage() {
     const activeTask = displayTasks.find((t) => t.id === activeId)
     if (!activeTask) return
 
-    // Resolve destination date: over a column header OR over another task
-    const destDate = colDates.includes(overId)
-      ? overId
-      : displayTasks.find((t) => t.id === overId)?.scheduledDate
+    // Resolve destination: pending column, a date column header, or another task's column
+    let destDate: string | null | undefined
+    if (overId === PENDING_COLUMN_ID) {
+      destDate = null
+    } else if (colDates.includes(overId)) {
+      destDate = overId
+    } else {
+      destDate = displayTasks.find((t) => t.id === overId)?.scheduledDate
+    }
 
-    if (!destDate) return
+    if (destDate === undefined) return
 
     if (activeTask.scheduledDate === destDate) {
       // Same column — reorder within the column
@@ -108,7 +120,7 @@ export function BoardPage() {
     // Different column — move card there, place it at the end
     setDisplayTasks((prev) => {
       const withoutActive = prev.filter((t) => t.id !== activeId)
-      const updated = { ...activeTask, scheduledDate: destDate }
+      const updated = { ...activeTask, scheduledDate: destDate as string | null }
       // Insert before the over-task if over a task, otherwise at end
       const overTaskIndex = withoutActive.findIndex((t) => t.id === overId)
       if (overTaskIndex !== -1) {
@@ -133,9 +145,9 @@ export function BoardPage() {
     const originalTask = tasks.find((t) => t.id === taskId)
     if (!originalTask) return
 
-    // Find where the display copy ended up
+    // Find where the display copy ended up (?? would treat null as falsy, so use explicit ternary)
     const displayTask = displayTasks.find((t) => t.id === taskId)
-    const destDate = displayTask?.scheduledDate ?? originalTask.scheduledDate
+    const destDate = displayTask != null ? displayTask.scheduledDate : originalTask.scheduledDate
 
     if (destDate !== originalTask.scheduledDate) {
       moveTask(taskId, destDate)
@@ -243,6 +255,14 @@ export function BoardPage() {
         onDragCancel={handleDragCancel}
       >
         <div className="flex flex-1 gap-3 overflow-x-auto px-4 py-4 snap-x snap-mandatory">
+          <PendingColumn
+            tasks={pendingTasks}
+            labels={labels}
+            priorities={priorities}
+            isDragging={activeTask !== null}
+            onAddTask={() => setAddDialogPending(true)}
+            onEditTask={(task) => setEditingTask(task)}
+          />
           {columns.map((date) => (
             <BoardColumn
               key={toYMD(date)}
@@ -272,8 +292,13 @@ export function BoardPage() {
 
       {/* Dialogs */}
       <AddTaskDialog
-        open={addDialogDate !== null}
-        onOpenChange={(open) => !open && setAddDialogDate(null)}
+        open={addDialogDate !== null || addDialogPending}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAddDialogDate(null)
+            setAddDialogPending(false)
+          }
+        }}
         defaultDate={addDialogDate ?? undefined}
         userId={userId}
         labels={labels}

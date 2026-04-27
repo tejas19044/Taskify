@@ -106,7 +106,6 @@ export function TaskFormFields({ data, onChange, labels, priorities }: TaskFormF
             className={valueClass}
             value={data.scheduledDate}
             onChange={(e) => set('scheduledDate')(e.target.value)}
-            required
           />
         </PropRow>
 
@@ -186,7 +185,7 @@ export function taskFormToTask(data: TaskFormData, userId: string): Omit<Task, '
     userId,
     title: data.title.trim(),
     description: data.description.trim(),
-    scheduledDate: data.scheduledDate,
+    scheduledDate: data.scheduledDate.trim() || null,
     estimatedHours: data.estimatedHours,
     labelId: data.labelId || '',
     priorityId: data.priorityId || '',
@@ -199,7 +198,7 @@ export function taskToFormData(task: Task): TaskFormData {
   return {
     title: task.title,
     description: task.description,
-    scheduledDate: task.scheduledDate,
+    scheduledDate: task.scheduledDate ?? '',
     estimatedHours: task.estimatedHours,
     labelId: task.labelId || '',
     priorityId: task.priorityId || '',
@@ -212,7 +211,7 @@ export function emptyFormData(defaultDate?: string): TaskFormData {
   return {
     title: '',
     description: '',
-    scheduledDate: defaultDate ?? new Date().toISOString().split('T')[0],
+    scheduledDate: defaultDate ?? '',
     estimatedHours: 1,
     labelId: '',
     priorityId: '',

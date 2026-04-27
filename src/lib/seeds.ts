@@ -15,7 +15,7 @@ function getMonday(offset: number = 0): Date {
 }
 
 export function seedIfEmpty(): void {
-  if (storageGet<string>(STORAGE_KEYS.SEEDED) === 'v4') return
+  if (storageGet<string>(STORAGE_KEYS.SEEDED) === 'v5') return
 
   storageSet(STORAGE_KEYS.USERS, [])
   storageSet(STORAGE_KEYS.TASKS, [])
@@ -141,6 +141,12 @@ export function seedIfEmpty(): void {
     { userId: tejas.id, title: 'Stripe PM interview prep', description: '', scheduledDate: toYMD(addDays(w1f, 2)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.medium, tags: ['Job Search', 'Learning'] },
     { userId: tejas.id, title: 'Write Taskify engineering spec', description: '', scheduledDate: toYMD(addDays(w1f, 3)), estimatedHours: 4, labelId: tL.deepWork, priorityId: tP.medium, tags: ['Taskify'] },
     { userId: tejas.id, title: 'Apply to 5 more PM roles', description: '', scheduledDate: toYMD(addDays(w1f, 4)), estimatedHours: 2.5, labelId: tL.urgent, priorityId: tP.medium, tags: ['Job Search'] },
+    // pending (unscheduled)
+    { userId: tejas.id, title: 'Migrate Taskify to Supabase', description: '', scheduledDate: null, estimatedHours: 6, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
+    { userId: tejas.id, title: 'Record product demo video', description: '', scheduledDate: null, estimatedHours: 2, labelId: tL.taskify, priorityId: tP.medium, tags: ['Taskify', 'Product'] },
+    { userId: tejas.id, title: 'Research YC application requirements', description: '', scheduledDate: null, estimatedHours: 1.5, labelId: tL.learning, priorityId: tP.medium, tags: ['Personal'] },
+    { userId: tejas.id, title: 'Create case study — DBH project', description: '', scheduledDate: null, estimatedHours: 3, labelId: tL.client, priorityId: tP.medium, tags: ['DBH', 'Product'] },
+    { userId: tejas.id, title: 'Refactor Taskify task service for Supabase', description: '', scheduledDate: null, estimatedHours: 4, labelId: tL.deepWork, priorityId: tP.low, tags: ['Taskify'] },
   ]
 
   // ── Admin tasks ───────────────────────────────────────────────────────────
@@ -190,6 +196,11 @@ export function seedIfEmpty(): void {
     { userId: admin.id, title: 'Onboard two new engineers', description: '', scheduledDate: toYMD(addDays(w1f, 1)), estimatedHours: 3, labelId: aL.team, priorityId: aP.medium, tags: ['Team', 'Hiring'] },
     { userId: admin.id, title: 'Implement rate limiting on public API', description: '', scheduledDate: toYMD(addDays(w1f, 2)), estimatedHours: 4, labelId: aL.urgent, priorityId: aP.high, tags: ['Security', 'Infrastructure'] },
     { userId: admin.id, title: 'Log aggregation pipeline upgrade', description: '', scheduledDate: toYMD(addDays(w1f, 3)), estimatedHours: 3, labelId: aL.infra, priorityId: aP.medium, tags: ['Infrastructure'] },
+    // pending (unscheduled)
+    { userId: admin.id, title: 'Evaluate Neon DB for serverless Postgres', description: '', scheduledDate: null, estimatedHours: 2, labelId: aL.infra, priorityId: aP.medium, tags: ['Infrastructure'] },
+    { userId: admin.id, title: 'Draft engineering blog post — lessons from SOC 2', description: '', scheduledDate: null, estimatedHours: 3, labelId: aL.strategy, priorityId: aP.low, tags: ['Strategy'] },
+    { userId: admin.id, title: 'Set up internal dev docs site', description: '', scheduledDate: null, estimatedHours: 4, labelId: aL.team, priorityId: aP.low, tags: ['Team'] },
+    { userId: admin.id, title: 'Define data deletion policy', description: '', scheduledDate: null, estimatedHours: 2, labelId: aL.urgent, priorityId: aP.medium, tags: ['Security', 'Compliance'] },
   ]
 
   const allTasks: Task[] = [...tejasTasks, ...adminTasks].map((t) => ({
@@ -201,5 +212,5 @@ export function seedIfEmpty(): void {
   }))
 
   bulkSeedTasks(allTasks)
-  storageSet(STORAGE_KEYS.SEEDED, 'v4')
+  storageSet(STORAGE_KEYS.SEEDED, 'v5')
 }

@@ -44,7 +44,7 @@ export function useTasks(userId: string) {
   )
 
   const moveTask = useCallback(
-    (id: string, newDate: string) => {
+    (id: string, newDate: string | null) => {
       const task = serviceMove(id, newDate)
       setTasks(getTasksByUser(userId))
       return task

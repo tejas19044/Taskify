@@ -26,7 +26,7 @@ export function getTasksByDate(userId: string, date: string): Task[] {
 
 export function getTasksByDateRange(userId: string, start: string, end: string): Task[] {
   return getTasks().filter(
-    (t) => t.userId === userId && t.scheduledDate >= start && t.scheduledDate <= end
+    (t) => t.userId === userId && t.scheduledDate !== null && t.scheduledDate >= start && t.scheduledDate <= end
   )
 }
 
@@ -64,7 +64,7 @@ export function deleteTask(id: string): void {
   saveTasks(tasks)
 }
 
-export function moveTask(id: string, newDate: string): Task {
+export function moveTask(id: string, newDate: string | null): Task {
   return updateTask(id, { scheduledDate: newDate })
 }
 
