@@ -4,7 +4,9 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, Pilcrow } from 'lucide-react'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, Pilcrow, List, ListOrdered, ListChecks } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 
@@ -52,6 +54,8 @@ export function RichTextEditor({ value, onChange, placeholder, className, minima
       Placeholder.configure({
         placeholder: placeholder ?? 'Add details, context, or notes…',
       }),
+      TaskList,
+      TaskItem.configure({ nested: false }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => {
@@ -61,7 +65,7 @@ export function RichTextEditor({ value, onChange, placeholder, className, minima
     editorProps: {
       attributes: {
         class: cn(
-          'outline-none prose prose-sm max-w-none text-slate-800 focus:outline-none',
+          'tiptap outline-none text-slate-800 focus:outline-none',
           minimal ? 'min-h-[200px]' : 'min-h-[160px]'
         ),
       },
@@ -105,6 +109,16 @@ export function RichTextEditor({ value, onChange, placeholder, className, minima
       </ToolbarButton>
       <ToolbarButton title="Strikethrough" onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')}>
         <Strikethrough className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <div className="mx-1 h-4 w-px bg-slate-200" />
+      <ToolbarButton title="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')}>
+        <List className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton title="Ordered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')}>
+        <ListOrdered className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton title="Checklist" onClick={() => editor.chain().focus().toggleTaskList().run()} active={editor.isActive('taskList')}>
+        <ListChecks className="h-3.5 w-3.5" />
       </ToolbarButton>
     </div>
   )

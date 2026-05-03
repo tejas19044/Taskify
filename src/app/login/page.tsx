@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Rocket } from 'lucide-react'
+import { Rocket, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -82,12 +82,16 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-5 rounded-lg bg-slate-50 p-3">
-            <p className="mb-1 text-xs font-medium text-slate-600">Demo credentials</p>
-            <div className="space-y-0.5 text-xs text-slate-500">
-              <p><span className="font-medium">tejas</span> / tejas123</p>
-              <p><span className="font-medium">admin</span> / admin123</p>
-            </div>
+        </div>
+
+        {/* Privacy notice */}
+        <div className="mt-5 flex gap-3 rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 px-4 py-3.5 shadow-sm">
+          <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-amber-600 mb-1">Privacy Notice</p>
+            <p className="text-[12px] leading-relaxed text-amber-800/70">
+              This application does not employ server-side authentication. Please refrain from entering sensitive, confidential, or proprietary information.
+            </p>
           </div>
         </div>
       </div>

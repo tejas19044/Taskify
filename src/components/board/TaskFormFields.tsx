@@ -1,9 +1,10 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Calendar, Clock, Tag, Link2, Layers, Flag } from 'lucide-react'
-import type { Task, Label, Priority } from '@/types'
+import { Calendar, Clock, Tag, Link2, Layers, Flag, Repeat } from 'lucide-react'
+import type { Task, Label, Priority, RecurrenceFrequency, RecurrenceRule } from '@/types'
 import { cn } from '@/lib/utils'
+import { DatePicker } from '@/components/shared/DatePicker'
 
 const RichTextEditor = dynamic(
   () => import('@/components/shared/RichTextEditor').then((m) => m.RichTextEditor),
@@ -19,6 +20,7 @@ export interface TaskFormData {
   priorityId: string
   tags: string
   referenceUrl: string
+  recurrenceRule: RecurrenceRule | null
 }
 
 interface TaskFormFieldsProps {
@@ -44,11 +46,12 @@ interface PropRowProps {
   label: string
   children: React.ReactNode
   noDivider?: boolean
+  className?: string
 }
 
-function PropRow({ icon: Icon, label, children, noDivider }: PropRowProps) {
+function PropRow({ icon: Icon, label, children, noDivider, className }: PropRowProps) {
   return (
-    <div className={cn('flex items-center gap-4 px-4 py-3', !noDivider && 'border-b border-slate-100/80')}>
+    <div className={cn('flex items-center gap-4 px-4 py-3', !noDivider && 'border-b border-slate-100/80', className)}>
       <div className="flex items-center gap-2.5 w-36 flex-shrink-0">
         <Icon className="h-4 w-4 text-slate-400" />
         <span className="text-sm text-slate-500">{label}</span>
@@ -64,12 +67,48 @@ const valueClass =
 const selectValueClass =
   'w-full bg-transparent text-sm text-slate-800 outline-none border-0 p-0 cursor-pointer focus:ring-0 appearance-none'
 
+// Mon-first order matching the board week display
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+
+function fourWeeksFromNow(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 28)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function TaskFormFields({ data, onChange, labels, priorities }: TaskFormFieldsProps) {
   const set = (field: keyof TaskFormData) => (value: string | number) =>
     onChange({ ...data, [field]: value })
 
   const selectedLabel = labels.find((l) => l.id === data.labelId)
   const selectedPriority = priorities.find((p) => p.id === data.priorityId)
+
+  const handleFrequencyChange = (freq: RecurrenceFrequency | '') => {
+    if (!freq) {
+      onChange({ ...data, recurrenceRule: null })
+      return
+    }
+    const startDay = data.scheduledDate
+      ? new Date(data.scheduledDate + 'T12:00:00').getDay()
+      : new Date().getDay()
+    onChange({
+      ...data,
+      recurrenceRule: {
+        frequency: freq,
+        days: freq === 'weekly' ? [startDay] : [],
+        endDate: data.recurrenceRule?.endDate ?? fourWeeksFromNow(),
+      },
+    })
+  }
+
+  const toggleDay = (dayNum: number) => {
+    if (!data.recurrenceRule) return
+    const days = data.recurrenceRule.days.includes(dayNum)
+      ? data.recurrenceRule.days.filter((d) => d !== dayNum)
+      : [...data.recurrenceRule.days, dayNum]
+    onChange({ ...data, recurrenceRule: { ...data.recurrenceRule, days } })
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -100,27 +139,102 @@ export function TaskFormFields({ data, onChange, labels, priorities }: TaskFormF
       {/* Properties panel */}
       <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm">
 
-        <PropRow icon={Calendar} label="Date">
-          <input
-            type="date"
-            className={valueClass}
-            value={data.scheduledDate}
-            onChange={(e) => set('scheduledDate')(e.target.value)}
-          />
-        </PropRow>
+        {/* Date row — only shown when no repeat is active; start date moves into the repeat section */}
+        {!data.recurrenceRule && (
+          <PropRow icon={Calendar} label="Date">
+            <DatePicker
+              value={data.scheduledDate}
+              onChange={(val) => onChange({ ...data, scheduledDate: val })}
+              placeholder="Pick a date"
+            />
+          </PropRow>
+        )}
 
         <PropRow icon={Clock} label="Est. hours">
           <div className="flex items-center gap-2">
             <input
               type="number"
               className={cn(valueClass, 'w-16')}
-              min={0.5}
+              min={0.25}
               max={24}
-              step={0.5}
+              step={0.25}
               value={data.estimatedHours}
               onChange={(e) => set('estimatedHours')(parseFloat(e.target.value) || 0)}
             />
             <span className="text-sm text-slate-400">hrs</span>
+          </div>
+        </PropRow>
+
+        {/* Repeat row — expands inline when a frequency is selected */}
+        <PropRow
+          icon={Repeat}
+          label="Repeat"
+          className={cn(data.recurrenceRule && 'items-start pt-3')}
+        >
+          <div className="flex flex-col gap-2.5 w-full">
+            <select
+              className={selectValueClass}
+              value={data.recurrenceRule?.frequency ?? ''}
+              onChange={(e) => handleFrequencyChange(e.target.value as RecurrenceFrequency | '')}
+            >
+              <option value="">No repeat</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+
+            {data.recurrenceRule && (
+              <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 flex flex-col gap-2.5">
+                {/* Start date */}
+                <div className="flex items-center gap-2">
+                  <span className="w-10 shrink-0 text-xs text-slate-400">Start</span>
+                  <DatePicker
+                    value={data.scheduledDate}
+                    onChange={(val) => onChange({ ...data, scheduledDate: val })}
+                    placeholder="Pick start date"
+                  />
+                </div>
+
+                {/* Day toggles for weekly — label spacer keeps them aligned with Start/End pickers */}
+                {data.recurrenceRule.frequency === 'weekly' && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-10 shrink-0" />
+                    <div className="flex items-center gap-1.5">
+                    {DAY_ORDER.map((dayNum, i) => {
+                      const isSelected = data.recurrenceRule!.days.includes(dayNum)
+                      return (
+                        <button
+                          key={dayNum}
+                          type="button"
+                          onClick={() => toggleDay(dayNum)}
+                          className={cn(
+                            'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-colors select-none',
+                            isSelected
+                              ? 'bg-indigo-500 text-white'
+                              : 'border border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-500'
+                          )}
+                        >
+                          {DAY_LABELS[i]}
+                        </button>
+                      )
+                    })}
+                    </div>
+                  </div>
+                )}
+
+                {/* End date */}
+                <div className="flex items-center gap-2">
+                  <span className="w-10 shrink-0 text-xs text-slate-400">End</span>
+                  <DatePicker
+                    value={data.recurrenceRule.endDate}
+                    onChange={(val) =>
+                      onChange({ ...data, recurrenceRule: { ...data.recurrenceRule!, endDate: val } })
+                    }
+                    placeholder="Pick end date"
+                    minDate={data.scheduledDate || undefined}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </PropRow>
 
@@ -204,6 +318,7 @@ export function taskToFormData(task: Task): TaskFormData {
     priorityId: task.priorityId || '',
     tags: task.tags.join(', '),
     referenceUrl: task.referenceUrl ?? '',
+    recurrenceRule: null,
   }
 }
 
@@ -217,5 +332,6 @@ export function emptyFormData(defaultDate?: string): TaskFormData {
     priorityId: '',
     tags: '',
     referenceUrl: '',
+    recurrenceRule: null,
   }
 }

@@ -2,6 +2,13 @@ export type WorkingMode = '5-day' | '7-day'
 export type BoardMode = 'current-week' | 'rolling'
 export type DashboardRange = 'today' | 'this-week' | 'last-week' | 'this-month' | 'last-30' | 'this-quarter' | 'custom'
 export type UserRole = 'admin' | 'user'
+export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly'
+
+export interface RecurrenceRule {
+  frequency: RecurrenceFrequency
+  days: number[]   // 0=Sun … 6=Sat — populated for weekly only
+  endDate: string  // YYYY-MM-DD inclusive
+}
 
 export interface Task {
   id: string
@@ -14,6 +21,9 @@ export interface Task {
   priorityId: string
   tags: string[]
   referenceUrl?: string
+  recurringGroupId?: string   // links all instances of a recurring series
+  halfDay?: 'am' | 'pm'       // morning/afternoon section on today's board column
+  completed?: boolean
   createdAt: string
   updatedAt: string
 }

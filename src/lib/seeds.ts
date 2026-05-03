@@ -15,7 +15,7 @@ function getMonday(offset: number = 0): Date {
 }
 
 export function seedIfEmpty(): void {
-  if (storageGet<string>(STORAGE_KEYS.SEEDED) === 'v5') return
+  if (storageGet<string>(STORAGE_KEYS.SEEDED) === 'v6') return
 
   storageSet(STORAGE_KEYS.USERS, [])
   storageSet(STORAGE_KEYS.TASKS, [])
@@ -92,63 +92,6 @@ export function seedIfEmpty(): void {
   const w0  = getMonday(0)    // this week
   const w1f = getMonday(1)    // next week
 
-  // ── Tejas tasks ───────────────────────────────────────────────────────────
-  const tejasTasks: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>[] = [
-    // 3 weeks ago
-    { userId: tejas.id, title: 'Set up project scaffolding', description: '', scheduledDate: toYMD(w3), estimatedHours: 3, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Cold outreach — first batch', description: '', scheduledDate: toYMD(w3), estimatedHours: 2, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'Read Shape Up by Basecamp', description: '', scheduledDate: toYMD(addDays(w3, 1)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.low, tags: ['Learning'] },
-    { userId: tejas.id, title: 'DBH kickoff call prep', description: '', scheduledDate: toYMD(addDays(w3, 1)), estimatedHours: 1.5, labelId: tL.client, priorityId: tP.medium, tags: ['DBH'] },
-    { userId: tejas.id, title: 'Competitive landscape research', description: '', scheduledDate: toYMD(addDays(w3, 2)), estimatedHours: 3, labelId: tL.deepWork, priorityId: tP.medium, tags: ['Product', 'Taskify'] },
-    { userId: tejas.id, title: 'Resume review with mentor', description: '', scheduledDate: toYMD(addDays(w3, 2)), estimatedHours: 1, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'DBH stakeholder interviews', description: '', scheduledDate: toYMD(addDays(w3, 3)), estimatedHours: 4, labelId: tL.client, priorityId: tP.high, tags: ['DBH', 'Product'] },
-    { userId: tejas.id, title: 'System design practice — URL shortener', description: '', scheduledDate: toYMD(addDays(w3, 3)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.medium, tags: ['Learning'] },
-    { userId: tejas.id, title: 'Weekly retro + OKR check-in', description: '', scheduledDate: toYMD(addDays(w3, 4)), estimatedHours: 1.5, labelId: tL.deepWork, priorityId: tP.low, tags: ['Personal'] },
-    // 2 weeks ago
-    { userId: tejas.id, title: 'Draft outreach messages for PM roles', description: '', scheduledDate: toYMD(w2), estimatedHours: 2, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'Review DBH database schema', description: '', scheduledDate: toYMD(w2), estimatedHours: 3, labelId: tL.deepWork, priorityId: tP.medium, tags: ['DBH'] },
-    { userId: tejas.id, title: 'Study AI PM interview notes', description: '', scheduledDate: toYMD(addDays(w2, 1)), estimatedHours: 2.5, labelId: tL.learning, priorityId: tP.medium, tags: ['Learning', 'Job Search'] },
-    { userId: tejas.id, title: 'Update resume bullet points', description: '', scheduledDate: toYMD(addDays(w2, 1)), estimatedHours: 1.5, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'Read DDIA Chapter 3 — Storage & Retrieval', description: '', scheduledDate: toYMD(addDays(w2, 2)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.low, tags: ['Learning'] },
-    { userId: tejas.id, title: 'DBH feature sprint planning', description: '', scheduledDate: toYMD(addDays(w2, 2)), estimatedHours: 3, labelId: tL.client, priorityId: tP.high, tags: ['DBH', 'Product'] },
-    { userId: tejas.id, title: 'Analyze product metrics — Q1 retention cohorts', description: '', scheduledDate: toYMD(addDays(w2, 3)), estimatedHours: 4, labelId: tL.deepWork, priorityId: tP.medium, tags: ['Product', 'DBH'] },
-    { userId: tejas.id, title: 'Competitive analysis — task management apps', description: '', scheduledDate: toYMD(addDays(w2, 3)), estimatedHours: 2, labelId: tL.taskify, priorityId: tP.medium, tags: ['Taskify', 'Product'] },
-    { userId: tejas.id, title: 'LinkedIn profile overhaul', description: '', scheduledDate: toYMD(addDays(w2, 4)), estimatedHours: 1.5, labelId: tL.urgent, priorityId: tP.medium, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'Write Taskify PRD v1', description: '', scheduledDate: toYMD(addDays(w2, 4)), estimatedHours: 3, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify', 'Product'] },
-    // last week
-    { userId: tejas.id, title: 'Build Taskify core board', description: '', scheduledDate: toYMD(w1), estimatedHours: 5, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Apply to 3 PM roles', description: '', scheduledDate: toYMD(w1), estimatedHours: 2, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'DBH patient dashboard wireframes', description: '', scheduledDate: toYMD(addDays(w1, 1)), estimatedHours: 3, labelId: tL.client, priorityId: tP.medium, tags: ['DBH', 'Product'] },
-    { userId: tejas.id, title: 'Build analytics dashboard', description: '', scheduledDate: toYMD(addDays(w1, 1)), estimatedHours: 4, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Prep Q2 stakeholder deck', description: '', scheduledDate: toYMD(addDays(w1, 2)), estimatedHours: 3.5, labelId: tL.deepWork, priorityId: tP.medium, tags: ['Product', 'DBH'] },
-    { userId: tejas.id, title: 'Mock interview — product sense', description: '', scheduledDate: toYMD(addDays(w1, 2)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.medium, tags: ['Learning', 'Job Search'] },
-    { userId: tejas.id, title: 'Finalize DBH onboarding spec', description: '', scheduledDate: toYMD(addDays(w1, 3)), estimatedHours: 2.5, labelId: tL.client, priorityId: tP.medium, tags: ['DBH'] },
-    { userId: tejas.id, title: 'Taskify settings + auth pages', description: '', scheduledDate: toYMD(addDays(w1, 3)), estimatedHours: 3, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Weekly review + next week planning', description: '', scheduledDate: toYMD(addDays(w1, 4)), estimatedHours: 1.5, labelId: tL.deepWork, priorityId: tP.low, tags: ['Personal'] },
-    // this week
-    { userId: tejas.id, title: 'Taskify — drag and drop polish', description: '', scheduledDate: toYMD(w0), estimatedHours: 4, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Apply to Rippling and Ramp', description: '', scheduledDate: toYMD(w0), estimatedHours: 2, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search'] },
-    { userId: tejas.id, title: 'DBH Q2 sprint kickoff', description: '', scheduledDate: toYMD(addDays(w0, 1)), estimatedHours: 2, labelId: tL.client, priorityId: tP.medium, tags: ['DBH'] },
-    { userId: tejas.id, title: 'Taskify calendar view', description: '', scheduledDate: toYMD(addDays(w0, 1)), estimatedHours: 5, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Read Inspired by Marty Cagan — Ch 1–4', description: '', scheduledDate: toYMD(addDays(w0, 2)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.low, tags: ['Learning'] },
-    { userId: tejas.id, title: 'DBH metrics review', description: '', scheduledDate: toYMD(addDays(w0, 2)), estimatedHours: 3, labelId: tL.client, priorityId: tP.medium, tags: ['DBH', 'Product'] },
-    { userId: tejas.id, title: 'Taskify admin panel', description: '', scheduledDate: toYMD(addDays(w0, 3)), estimatedHours: 3, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Prep for Linear PM screen', description: '', scheduledDate: toYMD(addDays(w0, 4)), estimatedHours: 3, labelId: tL.urgent, priorityId: tP.high, tags: ['Job Search', 'Learning'] },
-    // next week
-    { userId: tejas.id, title: 'Q2 planning — Taskify roadmap', description: '', scheduledDate: toYMD(w1f), estimatedHours: 3, labelId: tL.taskify, priorityId: tP.medium, tags: ['Taskify', 'Product'] },
-    { userId: tejas.id, title: 'Taskify v2 wireframes', description: '', scheduledDate: toYMD(w1f), estimatedHours: 4, labelId: tL.taskify, priorityId: tP.medium, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Portfolio website update', description: '', scheduledDate: toYMD(addDays(w1f, 1)), estimatedHours: 3, labelId: tL.urgent, priorityId: tP.medium, tags: ['Job Search', 'Personal'] },
-    { userId: tejas.id, title: 'Stripe PM interview prep', description: '', scheduledDate: toYMD(addDays(w1f, 2)), estimatedHours: 2, labelId: tL.learning, priorityId: tP.medium, tags: ['Job Search', 'Learning'] },
-    { userId: tejas.id, title: 'Write Taskify engineering spec', description: '', scheduledDate: toYMD(addDays(w1f, 3)), estimatedHours: 4, labelId: tL.deepWork, priorityId: tP.medium, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Apply to 5 more PM roles', description: '', scheduledDate: toYMD(addDays(w1f, 4)), estimatedHours: 2.5, labelId: tL.urgent, priorityId: tP.medium, tags: ['Job Search'] },
-    // pending (unscheduled)
-    { userId: tejas.id, title: 'Migrate Taskify to Supabase', description: '', scheduledDate: null, estimatedHours: 6, labelId: tL.taskify, priorityId: tP.high, tags: ['Taskify'] },
-    { userId: tejas.id, title: 'Record product demo video', description: '', scheduledDate: null, estimatedHours: 2, labelId: tL.taskify, priorityId: tP.medium, tags: ['Taskify', 'Product'] },
-    { userId: tejas.id, title: 'Research YC application requirements', description: '', scheduledDate: null, estimatedHours: 1.5, labelId: tL.learning, priorityId: tP.medium, tags: ['Personal'] },
-    { userId: tejas.id, title: 'Create case study — DBH project', description: '', scheduledDate: null, estimatedHours: 3, labelId: tL.client, priorityId: tP.medium, tags: ['DBH', 'Product'] },
-    { userId: tejas.id, title: 'Refactor Taskify task service for Supabase', description: '', scheduledDate: null, estimatedHours: 4, labelId: tL.deepWork, priorityId: tP.low, tags: ['Taskify'] },
-  ]
-
   // ── Admin tasks ───────────────────────────────────────────────────────────
   const adminTasks: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>[] = [
     // 3 weeks ago
@@ -203,7 +146,7 @@ export function seedIfEmpty(): void {
     { userId: admin.id, title: 'Define data deletion policy', description: '', scheduledDate: null, estimatedHours: 2, labelId: aL.urgent, priorityId: aP.medium, tags: ['Security', 'Compliance'] },
   ]
 
-  const allTasks: Task[] = [...tejasTasks, ...adminTasks].map((t) => ({
+  const allTasks: Task[] = [...adminTasks].map((t) => ({
     ...t,
     id: crypto.randomUUID(),
     description: t.description ?? '',
@@ -212,5 +155,5 @@ export function seedIfEmpty(): void {
   }))
 
   bulkSeedTasks(allTasks)
-  storageSet(STORAGE_KEYS.SEEDED, 'v5')
+  storageSet(STORAGE_KEYS.SEEDED, 'v6')
 }

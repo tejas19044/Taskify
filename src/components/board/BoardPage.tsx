@@ -38,13 +38,19 @@ import { toast } from 'sonner'
 export function BoardPage() {
   const { currentUser } = useAuth()
   const userId = currentUser!.id
-  const { tasks, createTask, updateTask, deleteTask, moveTask } = useTasks(userId)
+  const { tasks, createTask, createRecurringTasks, updateTask, updateAllInSeries, deleteTask, deleteAllInSeries, moveTask } = useTasks(userId)
   const { settings, updateSettings } = useSettings(userId)
   const { labels } = usePriorityLabels(userId)
   const { priorities } = usePriorities(userId)
 
-  const [weekAnchor, setWeekAnchor] = useState(new Date())
+  const [weekAnchor, setWeekAnchor] = useState(() => {
+    const today = new Date()
+    const dow = today.getDay() // 0 = Sun, 6 = Sat
+    // On weekends the Mon–Fri window is all in the past — jump to next week
+    return (dow === 0 || dow === 6) ? getNextWeekStart(today) : today
+  })
   const [addDialogDate, setAddDialogDate] = useState<string | null>(null)
+  const [addDialogHalfDay, setAddDialogHalfDay] = useState<'am' | 'pm' | null>(null)
   const [addDialogPending, setAddDialogPending] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
@@ -94,34 +100,44 @@ export function BoardPage() {
     const activeTask = displayTasks.find((t) => t.id === activeId)
     if (!activeTask) return
 
-    // Resolve destination: pending column, a date column header, or another task's column
+    // Resolve destination: pending column, date column, half-day section, or over a task
     let destDate: string | null | undefined
+    let destHalfDay: 'am' | 'pm' | undefined
     if (overId === PENDING_COLUMN_ID) {
       destDate = null
     } else if (colDates.includes(overId)) {
       destDate = overId
+    } else if (overId.endsWith('-am') && colDates.includes(overId.slice(0, -3))) {
+      destDate = overId.slice(0, -3)
+      destHalfDay = 'am'
+    } else if (overId.endsWith('-pm') && colDates.includes(overId.slice(0, -3))) {
+      destDate = overId.slice(0, -3)
+      destHalfDay = 'pm'
     } else {
-      destDate = displayTasks.find((t) => t.id === overId)?.scheduledDate
+      const overTask = displayTasks.find((t) => t.id === overId)
+      destDate = overTask?.scheduledDate
+      destHalfDay = overTask?.halfDay
     }
 
     if (destDate === undefined) return
 
-    if (activeTask.scheduledDate === destDate) {
-      // Same column — reorder within the column
-      const overId2 = over.id as string
+    const sameColumn = activeTask.scheduledDate === destDate
+    const sameSection = activeTask.halfDay === destHalfDay
+
+    if (sameColumn && sameSection) {
+      // Reorder within same section
       const activeIndex = displayTasks.findIndex((t) => t.id === activeId)
-      const overIndex = displayTasks.findIndex((t) => t.id === overId2)
+      const overIndex = displayTasks.findIndex((t) => t.id === overId)
       if (activeIndex !== overIndex && overIndex !== -1) {
         setDisplayTasks((prev) => arrayMove(prev, activeIndex, overIndex))
       }
       return
     }
 
-    // Different column — move card there, place it at the end
+    // Different column or different half-day section — move card
     setDisplayTasks((prev) => {
       const withoutActive = prev.filter((t) => t.id !== activeId)
-      const updated = { ...activeTask, scheduledDate: destDate as string | null }
-      // Insert before the over-task if over a task, otherwise at end
+      const updated = { ...activeTask, scheduledDate: destDate as string | null, halfDay: destHalfDay }
       const overTaskIndex = withoutActive.findIndex((t) => t.id === overId)
       if (overTaskIndex !== -1) {
         const result = [...withoutActive]
@@ -145,12 +161,13 @@ export function BoardPage() {
     const originalTask = tasks.find((t) => t.id === taskId)
     if (!originalTask) return
 
-    // Find where the display copy ended up (?? would treat null as falsy, so use explicit ternary)
+    // Find where the display copy ended up
     const displayTask = displayTasks.find((t) => t.id === taskId)
     const destDate = displayTask != null ? displayTask.scheduledDate : originalTask.scheduledDate
+    const destHalfDay = displayTask?.halfDay
 
-    if (destDate !== originalTask.scheduledDate) {
-      moveTask(taskId, destDate)
+    if (destDate !== originalTask.scheduledDate || destHalfDay !== originalTask.halfDay) {
+      moveTask(taskId, destDate, destHalfDay)
       toast.success('Task moved')
     }
     // If same column — no-op (display already looks right)
@@ -272,8 +289,15 @@ export function BoardPage() {
               priorities={priorities}
               settings={settings}
               isDragging={activeTask !== null}
-              onAddTask={(dateStr) => setAddDialogDate(dateStr)}
+              onAddTask={(dateStr, halfDay) => {
+                setAddDialogDate(dateStr)
+                setAddDialogHalfDay(halfDay ?? null)
+              }}
               onEditTask={(task) => setEditingTask(task)}
+              onCompleteTask={(task) => {
+                updateTask(task.id, { completed: !task.completed })
+                toast.success(task.completed ? 'Marked incomplete' : 'Task completed!')
+              }}
             />
           ))}
         </div>
@@ -297,15 +321,22 @@ export function BoardPage() {
           if (!open) {
             setAddDialogDate(null)
             setAddDialogPending(false)
+            setAddDialogHalfDay(null)
           }
         }}
         defaultDate={addDialogDate ?? undefined}
+        defaultHalfDay={addDialogHalfDay ?? undefined}
         userId={userId}
         labels={labels}
         priorities={priorities}
-        onAdd={(data) => {
-          createTask(data)
-          toast.success('Task added')
+        onAdd={(data, rule) => {
+          if (rule) {
+            const created = createRecurringTasks(data, rule)
+            toast.success(`${created.length} recurring tasks added`)
+          } else {
+            createTask(data)
+            toast.success('Task added')
+          }
         }}
       />
 
@@ -322,6 +353,23 @@ export function BoardPage() {
         onDelete={(id) => {
           deleteTask(id)
           toast.success('Task deleted')
+        }}
+        onSaveAll={(groupId, updates) => {
+          updateAllInSeries(groupId, updates)
+          toast.success('All events updated')
+        }}
+        onDeleteAll={(groupId) => {
+          deleteAllInSeries(groupId)
+          toast.success('Series deleted')
+        }}
+        onConvertToRecurring={(id, base, rule) => {
+          deleteTask(id)
+          const created = createRecurringTasks(base, rule)
+          toast.success(`${created.length} recurring tasks created`)
+        }}
+        onComplete={(id, completed) => {
+          updateTask(id, { completed })
+          toast.success(completed ? 'Task completed!' : 'Marked incomplete')
         }}
       />
     </div>

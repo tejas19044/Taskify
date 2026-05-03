@@ -2,7 +2,8 @@
 // Each function maps 1:1 to a Supabase query pattern.
 
 import { storageGet, storageSet, STORAGE_KEYS } from '@/lib/storage'
-import type { Task } from '@/types'
+import { generateRecurringDates } from '@/lib/dateUtils'
+import type { Task, RecurrenceRule } from '@/types'
 
 function getTasks(): Task[] {
   return storageGet<Task[]>(STORAGE_KEYS.TASKS) ?? []
@@ -64,11 +65,39 @@ export function deleteTask(id: string): void {
   saveTasks(tasks)
 }
 
-export function moveTask(id: string, newDate: string | null): Task {
-  return updateTask(id, { scheduledDate: newDate })
+export function moveTask(id: string, newDate: string | null, halfDay?: 'am' | 'pm'): Task {
+  return updateTask(id, { scheduledDate: newDate, halfDay })
 }
 
 export function bulkSeedTasks(tasks: Task[]): void {
   const existing = getTasks()
   saveTasks([...existing, ...tasks])
+}
+
+export function createRecurringTasks(
+  base: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>,
+  rule: RecurrenceRule
+): Task[] {
+  if (!base.scheduledDate) return []
+  const groupId = crypto.randomUUID()
+  const dates = generateRecurringDates(base.scheduledDate, rule)
+  return dates.map((date) =>
+    createTask({ ...base, scheduledDate: date, recurringGroupId: groupId })
+  )
+}
+
+export function updateTaskSeries(
+  recurringGroupId: string,
+  updates: Partial<Omit<Task, 'id' | 'userId' | 'scheduledDate' | 'recurringGroupId' | 'createdAt'>>
+): void {
+  const all = getTasks()
+  const now = new Date().toISOString()
+  const updated = all.map((t) =>
+    t.recurringGroupId === recurringGroupId ? { ...t, ...updates, updatedAt: now } : t
+  )
+  saveTasks(updated)
+}
+
+export function deleteTaskSeries(recurringGroupId: string): void {
+  saveTasks(getTasks().filter((t) => t.recurringGroupId !== recurringGroupId))
 }

@@ -23,7 +23,7 @@ type ViewMode = 'month' | 'week' | 'day'
 export function CalendarPage() {
   const { currentUser } = useAuth()
   const userId = currentUser!.id
-  const { tasks, createTask, updateTask, deleteTask } = useTasks(userId)
+  const { tasks, createTask, createRecurringTasks, updateTask, updateAllInSeries, deleteTask, deleteAllInSeries } = useTasks(userId)
   const { settings } = useSettings(userId)
   const { labels } = usePriorityLabels(userId)
   const { priorities } = usePriorities(userId)
@@ -152,9 +152,14 @@ export function CalendarPage() {
         userId={userId}
         labels={labels}
         priorities={priorities}
-        onAdd={(data) => {
-          createTask(data)
-          toast.success('Task added')
+        onAdd={(data, rule) => {
+          if (rule) {
+            const created = createRecurringTasks(data, rule)
+            toast.success(`${created.length} recurring tasks added`)
+          } else {
+            createTask(data)
+            toast.success('Task added')
+          }
         }}
       />
       <EditTaskDialog
@@ -170,6 +175,19 @@ export function CalendarPage() {
         onDelete={(id) => {
           deleteTask(id)
           toast.success('Task deleted')
+        }}
+        onSaveAll={(groupId, updates) => {
+          updateAllInSeries(groupId, updates)
+          toast.success('All events updated')
+        }}
+        onDeleteAll={(groupId) => {
+          deleteAllInSeries(groupId)
+          toast.success('Series deleted')
+        }}
+        onConvertToRecurring={(id, base, rule) => {
+          deleteTask(id)
+          const created = createRecurringTasks(base, rule)
+          toast.success(`${created.length} recurring tasks created`)
         }}
       />
     </div>

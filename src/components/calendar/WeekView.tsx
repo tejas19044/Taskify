@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { isToday } from 'date-fns'
 import { getWeekDays, toYMD, formatDayName } from '@/lib/dateUtils'
-import { CalendarTaskChip } from './CalendarTaskChip'
+import { CalendarTaskCard } from './CalendarTaskCard'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, Label, WorkingMode } from '@/types'
@@ -69,9 +69,9 @@ export function WeekView({ date, tasks, labels, workingMode, onDateClick, onTask
             </div>
 
             {/* Tasks */}
-            <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+            <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-2">
               {dayTasks.map((task) => (
-                <CalendarTaskChip
+                <CalendarTaskCard
                   key={task.id}
                   task={task}
                   label={labels.find((l) => l.id === task.labelId) ?? null}

@@ -68,8 +68,12 @@ export function DayView({ date, tasks, labels, onAddTask, onTaskClick }: DayView
                       <p className={cn('font-medium text-slate-800', isPast && 'line-through text-slate-500')}>
                         {task.title}
                       </p>
-                      {task.description && (
-                        <p className="mt-1 text-sm text-slate-500 line-clamp-2">{task.description}</p>
+                      {task.description?.trim() && (
+                        <div
+                          className="mt-1 text-sm text-slate-500 leading-relaxed [&_p]:my-0.5 [&_ul]:my-1 [&_li]:my-0"
+                          // eslint-disable-next-line react/no-danger
+                          dangerouslySetInnerHTML={{ __html: task.description }}
+                        />
                       )}
                     </div>
                     <div className="flex items-center gap-1 text-sm text-slate-500">

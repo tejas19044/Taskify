@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { LabelColorPicker } from './LabelColorPicker'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import type { Label } from '@/types'
 
 interface LabelRowProps {
@@ -17,6 +18,7 @@ interface LabelRowProps {
 export function LabelRow({ label, onUpdate, onDelete }: LabelRowProps) {
   const [name, setName] = useState(label.name)
   const [isEditing, setIsEditing] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value)
@@ -74,10 +76,19 @@ export function LabelRow({ label, onUpdate, onDelete }: LabelRowProps) {
         size="icon"
         variant="ghost"
         className="h-7 w-7 text-slate-400 hover:text-red-500"
-        onClick={() => onDelete(label.id)}
+        onClick={() => setShowConfirm(true)}
       >
         <Trash2 className="h-3.5 w-3.5" />
       </Button>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Delete label?"
+        description={`"${label.name}" will be permanently deleted. Tasks using this label won't be affected.`}
+        confirmLabel="Delete"
+        onConfirm={() => onDelete(label.id)}
+      />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -9,9 +10,11 @@ import {
   Settings,
   ShieldCheck,
   LogOut,
+  FileDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { User } from '@/types'
+import { DownloadReportDialog } from '@/components/shared/DownloadReportDialog'
 
 interface NavItem {
   href: string
@@ -51,6 +54,7 @@ function TaskifyLogo() {
 
 export function Sidebar({ user, onLogout, collapsed }: SidebarProps) {
   const pathname = usePathname()
+  const [reportOpen, setReportOpen] = useState(false)
 
   const navItems =
     user.role === 'admin'
@@ -58,6 +62,7 @@ export function Sidebar({ user, onLogout, collapsed }: SidebarProps) {
       : NAV_ITEMS
 
   return (
+    <>
     <aside
       className={cn(
         'flex h-full flex-col border-r border-slate-100 bg-white py-4 transition-[width] duration-200 ease-in-out overflow-hidden',
@@ -108,6 +113,21 @@ export function Sidebar({ user, onLogout, collapsed }: SidebarProps) {
         })}
       </nav>
 
+      {/* Download Report */}
+      <div className="mb-1">
+        <button
+          onClick={() => setReportOpen(true)}
+          title={collapsed ? 'Download report' : undefined}
+          className={cn(
+            'flex w-full items-center rounded-lg py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800',
+            collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
+          )}
+        >
+          <FileDown className="h-4 w-4 flex-shrink-0 text-slate-400" />
+          {!collapsed && 'Download report'}
+        </button>
+      </div>
+
       {/* User + Logout */}
       <div className="border-t border-slate-100 pt-3 space-y-0.5">
         <div
@@ -140,5 +160,12 @@ export function Sidebar({ user, onLogout, collapsed }: SidebarProps) {
         </button>
       </div>
     </aside>
+
+    <DownloadReportDialog
+      open={reportOpen}
+      onOpenChange={setReportOpen}
+      userId={user.id}
+    />
+    </>
   )
 }

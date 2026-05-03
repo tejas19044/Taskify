@@ -3,6 +3,7 @@ import {
   endOfWeek,
   addDays,
   subDays,
+  addMonths,
   format,
   parseISO,
   isToday,
@@ -10,7 +11,6 @@ import {
   isAfter,
   startOfMonth,
   endOfMonth,
-
   startOfDay,
   differenceInDays,
   addWeeks,
@@ -18,7 +18,7 @@ import {
   getISOWeek,
   getYear,
 } from 'date-fns'
-import type { WorkingMode } from '@/types'
+import type { WorkingMode, RecurrenceRule } from '@/types'
 
 export function toYMD(date: Date): string {
   return format(date, 'yyyy-MM-dd')
@@ -117,6 +117,29 @@ export function getWeekStartEnd(date: Date, mode: WorkingMode): { start: string;
     start: toYMD(days[0]),
     end: toYMD(days[days.length - 1]),
   }
+}
+
+export function generateRecurringDates(startDate: string, rule: RecurrenceRule): string[] {
+  const dates: string[] = []
+  let current = fromYMD(startDate)
+  const end = fromYMD(rule.endDate)
+
+  while (!isAfter(current, end)) {
+    if (rule.frequency === 'daily') {
+      dates.push(toYMD(current))
+      current = addDays(current, 1)
+    } else if (rule.frequency === 'weekly') {
+      if (rule.days.includes(current.getDay())) {
+        dates.push(toYMD(current))
+      }
+      current = addDays(current, 1)
+    } else {
+      // monthly
+      dates.push(toYMD(current))
+      current = addMonths(current, 1)
+    }
+  }
+  return dates
 }
 
 export function rangeToDateStrings(
