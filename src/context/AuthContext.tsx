@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { setCurrentUser(null); return }
     const profile = await getUserById(session.user.id)
-    setCurrentUser(profile)
+    if (profile) setCurrentUser(profile)
   }, [])
 
   useEffect(() => {
@@ -33,14 +33,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setCurrentUser(profile)
       }
       setIsLoading(false)
-    })
+    }).catch(() => setIsLoading(false))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setCurrentUser(null)
+        return
+      }
       if (session?.user) {
         const profile = await getUserById(session.user.id)
-        setCurrentUser(profile)
-      } else {
-        setCurrentUser(null)
+        if (profile) setCurrentUser(profile)
       }
     })
 
