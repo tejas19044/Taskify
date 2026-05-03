@@ -135,14 +135,14 @@ export function Sidebar({ user, onLogout, collapsed }: SidebarProps) {
             'flex items-center rounded-lg py-2',
             collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
           )}
-          title={collapsed ? user.username : undefined}
+          title={collapsed ? user.name : undefined}
         >
           <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600">
-            {user.username[0].toUpperCase()}
+            {user.name[0].toUpperCase()}
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-slate-700">{user.username}</p>
+              <p className="truncate text-xs font-semibold text-slate-700">{user.name}</p>
               <p className="text-[10px] text-slate-400 capitalize">{user.role}</p>
             </div>
           )}

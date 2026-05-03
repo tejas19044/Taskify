@@ -7,7 +7,7 @@ import { getCurrentUser, login as serviceLogin, logout as serviceLogout } from '
 interface AuthContextValue {
   currentUser: User | null
   isLoading: boolean
-  login: (username: string, password: string) => User | null
+  login: (email: string, password: string) => User | null
   logout: () => void
   refreshUser: () => void
 }
@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = useCallback((username: string, password: string): User | null => {
-    const user = serviceLogin(username, password)
+  const login = useCallback((email: string, password: string): User | null => {
+    const user = serviceLogin(email, password)
     if (user) setCurrentUser(user)
     return user
   }, [])

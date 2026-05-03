@@ -19,7 +19,7 @@ export function UserSelector({ users, selectedUserId, onSelect }: UserSelectorPr
       >
         {users.map((user) => (
           <option key={user.id} value={user.id}>
-            {user.username}{user.role === 'admin' ? ' (admin)' : ''}
+            {user.name}{user.role === 'admin' ? ' (admin)' : ''}
           </option>
         ))}
       </select>

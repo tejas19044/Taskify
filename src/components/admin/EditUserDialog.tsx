@@ -19,11 +19,13 @@ interface EditUserDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (id: string, updates: Partial<User>) => void
-  existingUsernames: string[]
+  existingNames: string[]
+  existingEmails: string[]
 }
 
-export function EditUserDialog({ user, open, onOpenChange, onSave, existingUsernames }: EditUserDialogProps) {
-  const [username, setUsername] = useState('')
+export function EditUserDialog({ user, open, onOpenChange, onSave, existingNames, existingEmails }: EditUserDialogProps) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('user')
   const [showPassword, setShowPassword] = useState(true)
@@ -31,7 +33,8 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, existingUsern
 
   useEffect(() => {
     if (user) {
-      setUsername(user.username)
+      setName(user.name)
+      setEmail(user.email)
       setPassword(user.password)
       setRole(user.role)
       setShowPassword(true)
@@ -44,10 +47,12 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, existingUsern
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!username.trim() || !password.trim()) { setError('Username and password required'); return }
-    const taken = existingUsernames.filter((u) => u !== user.username.toLowerCase())
-    if (taken.includes(username.toLowerCase())) { setError('Username already taken'); return }
-    onSave(user.id, { username: username.trim(), password, role })
+    if (!name.trim() || !email.trim() || !password.trim()) { setError('All fields are required'); return }
+    const takenNames = existingNames.filter((n) => n !== user.name.toLowerCase())
+    if (takenNames.includes(name.toLowerCase())) { setError('Name already taken'); return }
+    const takenEmails = existingEmails.filter((e) => e !== user.email.toLowerCase())
+    if (takenEmails.includes(email.toLowerCase())) { setError('Email already in use'); return }
+    onSave(user.id, { name: name.trim(), email: email.trim().toLowerCase(), password, role })
     onOpenChange(false)
   }
 
@@ -59,8 +64,12 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, existingUsern
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Username</Label>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Label>Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Email</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <Label>Password</Label>

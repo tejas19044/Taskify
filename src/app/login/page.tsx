@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,12 +21,12 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     await new Promise((r) => setTimeout(r, 300)) // brief loading feel
-    const user = login(username.trim(), password)
+    const user = login(email.trim().toLowerCase(), password)
     setLoading(false)
     if (user) {
       router.replace('/board')
     } else {
-      setError('Invalid username or password, or account is inactive.')
+      setError('Invalid email or password, or account is inactive.')
     }
   }
 
@@ -49,13 +49,14 @@ export default function LoginPage() {
           <h2 className="mb-6 text-lg font-semibold text-slate-800">Sign in</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 autoFocus
                 required
               />

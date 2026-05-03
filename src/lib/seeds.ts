@@ -15,7 +15,7 @@ function getMonday(offset: number = 0): Date {
 }
 
 export function seedIfEmpty(): void {
-  if (storageGet<string>(STORAGE_KEYS.SEEDED) === 'v6') return
+  if (storageGet<string>(STORAGE_KEYS.SEEDED) === 'v7') return
 
   storageSet(STORAGE_KEYS.USERS, [])
   storageSet(STORAGE_KEYS.TASKS, [])
@@ -23,10 +23,10 @@ export function seedIfEmpty(): void {
   storageSet(STORAGE_KEYS.PRIORITY_LABELS, [])
   storageSet(STORAGE_KEYS.PRIORITIES, [])
 
-  const admin = createUser({ username: 'admin', password: 'admin123', role: 'admin', active: true })
-  const tejas = createUser({ username: 'tejas', password: 'tejas123', role: 'user', active: true })
+  const admin = createUser({ name: 'Tejas', email: 'dhekanetejas@gmail.com', password: 'Tejas1904#', role: 'admin', active: true })
+  const chinmay = createUser({ name: 'Chinmay', email: 'dhekanechinmay@gmail.com', password: 'Chinmay12345', role: 'user', active: true })
 
-  updateSettings(tejas.id, { workingMode: '5-day', boardMode: 'current-week', defaultDailyHours: 8 })
+  updateSettings(chinmay.id, { workingMode: '5-day', boardMode: 'current-week', defaultDailyHours: 8 })
   updateSettings(admin.id, { workingMode: '5-day', boardMode: 'current-week', defaultDailyHours: 8 })
 
   // ── Tejas labels ──────────────────────────────────────────────────────────
@@ -38,11 +38,11 @@ export function seedIfEmpty(): void {
     taskify: crypto.randomUUID(),
   }
   bulkSeedLabels([
-    { id: tL.deepWork, userId: tejas.id, name: 'Deep Work', color: '#6366f1', createdAt: new Date().toISOString() },
-    { id: tL.urgent,   userId: tejas.id, name: 'Urgent',    color: '#ef4444', createdAt: new Date().toISOString() },
-    { id: tL.client,   userId: tejas.id, name: 'Client',    color: '#f59e0b', createdAt: new Date().toISOString() },
-    { id: tL.learning, userId: tejas.id, name: 'Learning',  color: '#10b981', createdAt: new Date().toISOString() },
-    { id: tL.taskify, userId: tejas.id, name: 'Taskify',  color: '#8b5cf6', createdAt: new Date().toISOString() },
+    { id: tL.deepWork, userId: chinmay.id, name: 'Deep Work', color: '#6366f1', createdAt: new Date().toISOString() },
+    { id: tL.urgent,   userId: chinmay.id, name: 'Urgent',    color: '#ef4444', createdAt: new Date().toISOString() },
+    { id: tL.client,   userId: chinmay.id, name: 'Client',    color: '#f59e0b', createdAt: new Date().toISOString() },
+    { id: tL.learning, userId: chinmay.id, name: 'Learning',  color: '#10b981', createdAt: new Date().toISOString() },
+    { id: tL.taskify, userId: chinmay.id, name: 'Taskify',  color: '#8b5cf6', createdAt: new Date().toISOString() },
   ] as Label[])
 
   // ── Admin labels ──────────────────────────────────────────────────────────
@@ -68,9 +68,9 @@ export function seedIfEmpty(): void {
     low:    crypto.randomUUID(),
   }
   bulkSeedPriorities([
-    { id: tP.high,   userId: tejas.id, name: 'High',   color: '#ef4444', createdAt: new Date().toISOString() },
-    { id: tP.medium, userId: tejas.id, name: 'Medium', color: '#f59e0b', createdAt: new Date().toISOString() },
-    { id: tP.low,    userId: tejas.id, name: 'Low',    color: '#10b981', createdAt: new Date().toISOString() },
+    { id: tP.high,   userId: chinmay.id, name: 'High',   color: '#ef4444', createdAt: new Date().toISOString() },
+    { id: tP.medium, userId: chinmay.id, name: 'Medium', color: '#f59e0b', createdAt: new Date().toISOString() },
+    { id: tP.low,    userId: chinmay.id, name: 'Low',    color: '#10b981', createdAt: new Date().toISOString() },
   ])
 
   // ── Admin priorities ──────────────────────────────────────────────────────
@@ -155,5 +155,5 @@ export function seedIfEmpty(): void {
   }))
 
   bulkSeedTasks(allTasks)
-  storageSet(STORAGE_KEYS.SEEDED, 'v6')
+  storageSet(STORAGE_KEYS.SEEDED, 'v7')
 }

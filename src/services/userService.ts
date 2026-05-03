@@ -20,12 +20,17 @@ export function getUserById(id: string): User | null {
   return getUsers().find((u) => u.id === id) ?? null
 }
 
-export function getUserByUsername(username: string): User | null {
-  return getUsers().find((u) => u.username.toLowerCase() === username.toLowerCase()) ?? null
+export function getUserByUsername(name: string): User | null {
+  return getUsers().find((u) => u.name.toLowerCase() === name.toLowerCase()) ?? null
+}
+
+export function getUserByEmail(email: string): User | null {
+  return getUsers().find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null
 }
 
 export function createUser(data: {
-  username: string
+  name: string
+  email: string
   password: string
   role: UserRole
   active: boolean
@@ -33,7 +38,8 @@ export function createUser(data: {
   const users = getUsers()
   const user: User = {
     id: crypto.randomUUID(),
-    username: data.username,
+    name: data.name,
+    email: data.email,
     password: data.password,
     role: data.role,
     active: data.active,
@@ -75,8 +81,8 @@ export function deleteUser(id: string): void {
   storageSet(STORAGE_KEYS.PRIORITIES, priorities.filter((p) => p.userId !== id))
 }
 
-export function login(username: string, password: string): User | null {
-  const user = getUserByUsername(username)
+export function login(email: string, password: string): User | null {
+  const user = getUserByEmail(email)
   if (!user || !user.active || user.password !== password) return null
   storageSet(STORAGE_KEYS.CURRENT_USER_ID, user.id)
   return user

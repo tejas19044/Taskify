@@ -57,8 +57,13 @@ export function AdminPage() {
 
   const refresh = () => setUsers(getAllUsers())
 
-  const existingUsernames = useMemo(
-    () => users.map((u) => u.username.toLowerCase()),
+  const existingNames = useMemo(
+    () => users.map((u) => u.name.toLowerCase()),
+    [users]
+  )
+
+  const existingEmails = useMemo(
+    () => users.map((u) => u.email.toLowerCase()),
     [users]
   )
 
@@ -87,6 +92,7 @@ export function AdminPage() {
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead className="text-xs font-semibold text-slate-600">User</TableHead>
+                <TableHead className="text-xs font-semibold text-slate-600">Email</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Role</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Password</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Status</TableHead>
@@ -100,14 +106,15 @@ export function AdminPage() {
                   <TableCell>
                     <div className="flex items-center gap-2.5">
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
-                        {user.username[0].toUpperCase()}
+                        {user.name[0].toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-slate-800">{user.username}</span>
+                      <span className="text-sm font-medium text-slate-800">{user.name}</span>
                       {user.id === currentUser.id && (
                         <span className="text-xs text-slate-400">(you)</span>
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-sm text-slate-500">{user.email}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
                       {user.role === 'admin' ? (
@@ -174,18 +181,20 @@ export function AdminPage() {
       <CreateUserDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        existingUsernames={existingUsernames}
+        existingNames={existingNames}
+        existingEmails={existingEmails}
         onCreate={(data) => {
           createUser(data)
           refresh()
-          toast.success(`User ${data.username} created`)
+          toast.success(`User ${data.name} created`)
         }}
       />
       <EditUserDialog
         user={editingUser}
         open={editingUser !== null}
         onOpenChange={(open) => !open && setEditingUser(null)}
-        existingUsernames={existingUsernames}
+        existingNames={existingNames}
+        existingEmails={existingEmails}
         onSave={(id, updates) => {
           updateUser(id, updates)
           refresh()
@@ -195,14 +204,14 @@ export function AdminPage() {
       <ConfirmDialog
         open={deletingUser !== null}
         onOpenChange={(open) => !open && setDeletingUser(null)}
-        title={`Delete ${deletingUser?.username ?? 'user'}?`}
+        title={`Delete ${deletingUser?.name ?? 'user'}?`}
         description="This will permanently delete the user and all their tasks, labels, and settings. This cannot be undone."
         confirmLabel="Delete user"
         onConfirm={() => {
           if (!deletingUser) return
           deleteUser(deletingUser.id)
           refresh()
-          toast.success(`${deletingUser.username} deleted`)
+          toast.success(`${deletingUser.name} deleted`)
           setDeletingUser(null)
         }}
       />
