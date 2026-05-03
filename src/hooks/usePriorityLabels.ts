@@ -14,9 +14,14 @@ export function usePriorityLabels(userId: string) {
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
-    const data = await getLabelsByUser(userId)
-    setLabels(data)
-    setLoading(false)
+    try {
+      const data = await getLabelsByUser(userId)
+      setLabels(data)
+    } catch {
+      // leave labels as []
+    } finally {
+      setLoading(false)
+    }
   }, [userId])
 
   useEffect(() => { load() }, [load])

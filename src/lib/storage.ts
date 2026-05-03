@@ -36,4 +36,6 @@ export const STORAGE_KEYS = {
   PRIORITIES: 'taskify:priorities',
   CURRENT_USER_ID: 'taskify:currentUserId',
   SEEDED: 'taskify:seeded',
+  USER_ROLE: 'taskify:userRole',
+  SESSION: 'taskify:session',
 } as const

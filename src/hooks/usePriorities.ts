@@ -14,9 +14,14 @@ export function usePriorities(userId: string) {
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
-    const data = await getPrioritiesByUser(userId)
-    setPriorities(data)
-    setLoading(false)
+    try {
+      const data = await getPrioritiesByUser(userId)
+      setPriorities(data)
+    } catch {
+      // leave priorities as []
+    } finally {
+      setLoading(false)
+    }
   }, [userId])
 
   useEffect(() => { load() }, [load])

@@ -18,9 +18,14 @@ export function useTasks(userId: string) {
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
-    const data = await getTasksByUser(userId)
-    setTasks(data)
-    setLoading(false)
+    try {
+      const data = await getTasksByUser(userId)
+      setTasks(data)
+    } catch {
+      // leave tasks as []
+    } finally {
+      setLoading(false)
+    }
   }, [userId])
 
   useEffect(() => { load() }, [load])

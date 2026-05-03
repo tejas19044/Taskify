@@ -14,9 +14,14 @@ export function useSettings(userId: string) {
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(async () => {
-    const data = await getSettings(userId)
-    setSettings(data)
-    setLoading(false)
+    try {
+      const data = await getSettings(userId)
+      setSettings(data)
+    } catch {
+      // leave settings as defaults
+    } finally {
+      setLoading(false)
+    }
   }, [userId])
 
   useEffect(() => { load() }, [load])
