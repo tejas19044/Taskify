@@ -27,9 +27,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T) =>
+      Promise.race([p, new Promise<T>((r) => setTimeout(() => r(fallback), ms))])
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const profile = await getUserById(session.user.id)
+        const profile = await withTimeout(getUserById(session.user.id), 5000, null)
         setCurrentUser(profile)
       }
       setIsLoading(false)
