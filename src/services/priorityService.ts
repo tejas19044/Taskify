@@ -1,40 +1,37 @@
-import { storageGet, storageSet, STORAGE_KEYS } from '@/lib/storage'
+import { supabase } from '@/lib/supabase'
 import type { Priority } from '@/types'
 
-function getPriorities(): Priority[] {
-  return storageGet<Priority[]>(STORAGE_KEYS.PRIORITIES) ?? []
+type PriorityRow = { id: string; user_id: string; name: string; color: string; created_at: string }
+
+function rowToPriority(r: PriorityRow): Priority {
+  return { id: r.id, userId: r.user_id, name: r.name, color: r.color, createdAt: r.created_at }
 }
 
-function savePriorities(priorities: Priority[]): void {
-  storageSet(STORAGE_KEYS.PRIORITIES, priorities)
+export async function getPrioritiesByUser(userId: string): Promise<Priority[]> {
+  const { data, error } = await supabase.from('priorities').select('*')
+    .eq('user_id', userId).order('created_at')
+  if (error) throw error
+  return (data as PriorityRow[]).map(rowToPriority)
 }
 
-export function getPrioritiesByUser(userId: string): Priority[] {
-  return getPriorities().filter((p) => p.userId === userId)
+export async function createPriority(data: Omit<Priority, 'id' | 'createdAt'>): Promise<Priority> {
+  const { data: row, error } = await supabase.from('priorities')
+    .insert({ user_id: data.userId, name: data.name, color: data.color }).select().single()
+  if (error) throw error
+  return rowToPriority(row as PriorityRow)
 }
 
-export function createPriority(data: Omit<Priority, 'id' | 'createdAt'>): Priority {
-  const priorities = getPriorities()
-  const priority: Priority = { ...data, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
-  savePriorities([...priorities, priority])
-  return priority
+export async function updatePriority(
+  id: string,
+  updates: Partial<Omit<Priority, 'id' | 'userId' | 'createdAt'>>
+): Promise<Priority> {
+  const { data: row, error } = await supabase.from('priorities')
+    .update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return rowToPriority(row as PriorityRow)
 }
 
-export function updatePriority(id: string, updates: Partial<Omit<Priority, 'id' | 'userId' | 'createdAt'>>): Priority {
-  const priorities = getPriorities()
-  const idx = priorities.findIndex((p) => p.id === id)
-  if (idx === -1) throw new Error(`Priority ${id} not found`)
-  const updated = { ...priorities[idx], ...updates }
-  priorities[idx] = updated
-  savePriorities(priorities)
-  return updated
-}
-
-export function deletePriority(id: string): void {
-  savePriorities(getPriorities().filter((p) => p.id !== id))
-}
-
-export function bulkSeedPriorities(priorities: Priority[]): void {
-  const existing = getPriorities()
-  savePriorities([...existing, ...priorities])
+export async function deletePriority(id: string): Promise<void> {
+  const { error } = await supabase.from('priorities').delete().eq('id', id)
+  if (error) throw error
 }

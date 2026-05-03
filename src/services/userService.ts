@@ -1,103 +1,95 @@
-// NOTE: Replace storageGet/storageSet with Supabase Auth + DB queries for production.
-// The function signatures stay the same; only the implementation changes.
+import { supabase } from '@/lib/supabase'
+import type { User, UserRole } from '@/types'
 
-import { storageGet, storageSet, storageDelete, STORAGE_KEYS } from '@/lib/storage'
-import type { User, UserRole, Task, UserSettings, Label, Priority } from '@/types'
-
-function getUsers(): User[] {
-  return storageGet<User[]>(STORAGE_KEYS.USERS) ?? []
+type ProfileRow = {
+  id: string
+  name: string
+  email: string
+  role: string
+  active: boolean
+  created_at: string
 }
 
-function saveUsers(users: User[]): void {
-  storageSet(STORAGE_KEYS.USERS, users)
+function rowToUser(row: ProfileRow): User {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role as UserRole,
+    active: row.active,
+    createdAt: row.created_at,
+  }
 }
 
-export function getAllUsers(): User[] {
-  return getUsers()
+async function authToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token ?? null
 }
 
-export function getUserById(id: string): User | null {
-  return getUsers().find((u) => u.id === id) ?? null
+export async function getAllUsers(): Promise<User[]> {
+  const { data, error } = await supabase.from('profiles').select('*').order('created_at')
+  if (error) throw error
+  return (data as ProfileRow[]).map(rowToUser)
 }
 
-export function getUserByUsername(name: string): User | null {
-  return getUsers().find((u) => u.name.toLowerCase() === name.toLowerCase()) ?? null
+export async function getUserById(id: string): Promise<User | null> {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single()
+  if (error || !data) return null
+  return rowToUser(data as ProfileRow)
 }
 
-export function getUserByEmail(email: string): User | null {
-  return getUsers().find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null
+export async function login(email: string, password: string): Promise<User | null> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error || !data.user) return null
+  return await getUserById(data.user.id)
 }
 
-export function createUser(data: {
+export async function logout(): Promise<void> {
+  await supabase.auth.signOut()
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return null
+  return await getUserById(session.user.id)
+}
+
+export async function createUser(data: {
   name: string
   email: string
   password: string
   role: UserRole
   active: boolean
-}): User {
-  const users = getUsers()
-  const user: User = {
-    id: crypto.randomUUID(),
-    name: data.name,
-    email: data.email,
-    password: data.password,
-    role: data.role,
-    active: data.active,
-    createdAt: new Date().toISOString(),
-  }
-  saveUsers([...users, user])
-  return user
+}): Promise<User> {
+  const token = await authToken()
+  const res = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
 }
 
-export function updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt'>>): User {
-  const users = getUsers()
-  const idx = users.findIndex((u) => u.id === id)
-  if (idx === -1) throw new Error(`User ${id} not found`)
-  const updated = { ...users[idx], ...updates }
-  users[idx] = updated
-  saveUsers(users)
-  return updated
+export async function updateUser(
+  id: string,
+  updates: Partial<User & { password: string }>
+): Promise<User> {
+  const token = await authToken()
+  const res = await fetch(`/api/admin/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(updates),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
 }
 
-export function deleteUser(id: string): void {
-  // Remove user record
-  const users = getUsers().filter((u) => u.id !== id)
-  saveUsers(users)
-
-  // Cascade: remove all tasks for this user
-  const tasks = storageGet<Task[]>(STORAGE_KEYS.TASKS) ?? []
-  storageSet(STORAGE_KEYS.TASKS, tasks.filter((t) => t.userId !== id))
-
-  // Cascade: remove settings
-  const settings = storageGet<UserSettings[]>(STORAGE_KEYS.SETTINGS) ?? []
-  storageSet(STORAGE_KEYS.SETTINGS, settings.filter((s) => s.userId !== id))
-
-  // Cascade: remove priority labels
-  const labels = storageGet<Label[]>(STORAGE_KEYS.PRIORITY_LABELS) ?? []
-  storageSet(STORAGE_KEYS.PRIORITY_LABELS, labels.filter((l) => l.userId !== id))
-
-  // Cascade: remove priorities
-  const priorities = storageGet<Priority[]>(STORAGE_KEYS.PRIORITIES) ?? []
-  storageSet(STORAGE_KEYS.PRIORITIES, priorities.filter((p) => p.userId !== id))
-}
-
-export function login(email: string, password: string): User | null {
-  const user = getUserByEmail(email)
-  if (!user || !user.active || user.password !== password) return null
-  storageSet(STORAGE_KEYS.CURRENT_USER_ID, user.id)
-  return user
-}
-
-export function logout(): void {
-  storageDelete(STORAGE_KEYS.CURRENT_USER_ID)
-}
-
-export function getCurrentUserId(): string | null {
-  return storageGet<string>(STORAGE_KEYS.CURRENT_USER_ID)
-}
-
-export function getCurrentUser(): User | null {
-  const id = getCurrentUserId()
-  if (!id) return null
-  return getUserById(id)
+export async function deleteUser(id: string): Promise<void> {
+  const token = await authToken()
+  const res = await fetch(`/api/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(await res.text())
 }

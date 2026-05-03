@@ -32,8 +32,7 @@ export interface User {
   id: string
   name: string
   email: string
-  // NOTE: Plaintext password — mock prototype only. Replace with Supabase Auth in production.
-  password: string
+  password?: string
   role: UserRole
   active: boolean
   createdAt: string

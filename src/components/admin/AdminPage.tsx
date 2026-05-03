@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, ShieldCheck, User as UserIcon, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, ShieldCheck, User as UserIcon, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
@@ -22,23 +22,7 @@ import { getAllUsers, createUser, updateUser, deleteUser } from '@/services/user
 import type { User } from '@/types'
 import { toast } from 'sonner'
 import { format, parseISO } from 'date-fns'
-import { useEffect } from 'react'
 
-function PasswordCell({ password }: { password: string }) {
-  const [show, setShow] = useState(false)
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="font-mono text-xs text-slate-600">{show ? password : '••••••••'}</span>
-      <button
-        type="button"
-        className="text-slate-300 hover:text-slate-600 transition-colors"
-        onClick={() => setShow((v) => !v)}
-      >
-        {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </button>
-    </div>
-  )
-}
 
 export function AdminPage() {
   const { currentUser } = useAuth()
@@ -50,12 +34,16 @@ export function AdminPage() {
     }
   }, [currentUser, router])
 
-  const [users, setUsers] = useState<User[]>(() => getAllUsers())
+  const [users, setUsers] = useState<User[]>([])
   const [createOpen, setCreateOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deletingUser, setDeletingUser] = useState<User | null>(null)
 
-  const refresh = () => setUsers(getAllUsers())
+  const refresh = useCallback(async () => {
+    setUsers(await getAllUsers())
+  }, [])
+
+  useEffect(() => { refresh() }, [refresh])
 
   const existingNames = useMemo(
     () => users.map((u) => u.name.toLowerCase()),
@@ -94,7 +82,6 @@ export function AdminPage() {
                 <TableHead className="text-xs font-semibold text-slate-600">User</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Email</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Role</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-600">Password</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Status</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600">Created</TableHead>
                 <TableHead className="text-xs font-semibold text-slate-600 text-right">Actions</TableHead>
@@ -126,16 +113,13 @@ export function AdminPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <PasswordCell password={user.password} />
-                  </TableCell>
-                  <TableCell>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={user.active}
                         disabled={user.id === currentUser.id}
-                        onCheckedChange={(checked) => {
-                          updateUser(user.id, { active: checked })
-                          refresh()
+                        onCheckedChange={async (checked) => {
+                          await updateUser(user.id, { active: checked })
+                          await refresh()
                           toast.success(checked ? 'User activated' : 'User deactivated')
                         }}
                       />
@@ -183,9 +167,9 @@ export function AdminPage() {
         onOpenChange={setCreateOpen}
         existingNames={existingNames}
         existingEmails={existingEmails}
-        onCreate={(data) => {
-          createUser(data)
-          refresh()
+        onCreate={async (data) => {
+          await createUser(data)
+          await refresh()
           toast.success(`User ${data.name} created`)
         }}
       />
@@ -195,9 +179,9 @@ export function AdminPage() {
         onOpenChange={(open) => !open && setEditingUser(null)}
         existingNames={existingNames}
         existingEmails={existingEmails}
-        onSave={(id, updates) => {
-          updateUser(id, updates)
-          refresh()
+        onSave={async (id, updates) => {
+          await updateUser(id, updates)
+          await refresh()
           toast.success('User updated')
         }}
       />
@@ -207,10 +191,10 @@ export function AdminPage() {
         title={`Delete ${deletingUser?.name ?? 'user'}?`}
         description="This will permanently delete the user and all their tasks, labels, and settings. This cannot be undone."
         confirmLabel="Delete user"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!deletingUser) return
-          deleteUser(deletingUser.id)
-          refresh()
+          await deleteUser(deletingUser.id)
+          await refresh()
           toast.success(`${deletingUser.name} deleted`)
           setDeletingUser(null)
         }}

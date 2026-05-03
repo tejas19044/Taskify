@@ -152,12 +152,12 @@ export function CalendarPage() {
         userId={userId}
         labels={labels}
         priorities={priorities}
-        onAdd={(data, rule) => {
+        onAdd={async (data, rule) => {
           if (rule) {
-            const created = createRecurringTasks(data, rule)
+            const created = await createRecurringTasks(data, rule)
             toast.success(`${created.length} recurring tasks added`)
           } else {
-            createTask(data)
+            await createTask(data)
             toast.success('Task added')
           }
         }}
@@ -184,9 +184,9 @@ export function CalendarPage() {
           deleteAllInSeries(groupId)
           toast.success('Series deleted')
         }}
-        onConvertToRecurring={(id, base, rule) => {
-          deleteTask(id)
-          const created = createRecurringTasks(base, rule)
+        onConvertToRecurring={async (id, base, rule) => {
+          await deleteTask(id)
+          const created = await createRecurringTasks(base, rule)
           toast.success(`${created.length} recurring tasks created`)
         }}
       />

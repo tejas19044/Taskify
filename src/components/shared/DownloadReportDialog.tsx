@@ -23,8 +23,8 @@ export function DownloadReportDialog({ open, onOpenChange, userId }: DownloadRep
   const [from, setFrom] = useState(firstOfMonth)
   const [to, setTo] = useState(today)
 
-  const handleDownload = () => {
-    const csv = generateTasksCsv(userId, from, to)
+  const handleDownload = async () => {
+    const csv = await generateTasksCsv(userId, from, to)
     const filename = `taskify-report-${from}-to-${to}.csv`
     downloadCsv(csv, filename)
     onOpenChange(false)

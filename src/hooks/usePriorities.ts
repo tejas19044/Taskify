@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Priority } from '@/types'
 import {
   getPrioritiesByUser,
@@ -10,37 +10,33 @@ import {
 } from '@/services/priorityService'
 
 export function usePriorities(userId: string) {
-  const [priorities, setPriorities] = useState<Priority[]>(() => getPrioritiesByUser(userId))
+  const [priorities, setPriorities] = useState<Priority[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(() => {
-    setPriorities(getPrioritiesByUser(userId))
+  const load = useCallback(async () => {
+    const data = await getPrioritiesByUser(userId)
+    setPriorities(data)
+    setLoading(false)
   }, [userId])
 
-  const createPriority = useCallback(
-    (data: Omit<Priority, 'id' | 'createdAt'>) => {
-      const p = serviceCreate(data)
-      setPriorities(getPrioritiesByUser(userId))
-      return p
-    },
-    [userId]
-  )
+  useEffect(() => { load() }, [load])
 
-  const updatePriority = useCallback(
-    (id: string, updates: Partial<Priority>) => {
-      const p = serviceUpdate(id, updates)
-      setPriorities(getPrioritiesByUser(userId))
-      return p
-    },
-    [userId]
-  )
+  const createPriority = useCallback(async (data: Omit<Priority, 'id' | 'createdAt'>) => {
+    const p = await serviceCreate(data)
+    await load()
+    return p
+  }, [load])
 
-  const deletePriority = useCallback(
-    (id: string) => {
-      serviceDelete(id)
-      setPriorities(getPrioritiesByUser(userId))
-    },
-    [userId]
-  )
+  const updatePriority = useCallback(async (id: string, updates: Partial<Priority>) => {
+    const p = await serviceUpdate(id, updates)
+    await load()
+    return p
+  }, [load])
 
-  return { priorities, refresh, createPriority, updatePriority, deletePriority }
+  const deletePriority = useCallback(async (id: string) => {
+    await serviceDelete(id)
+    await load()
+  }, [load])
+
+  return { priorities, loading, refresh: load, createPriority, updatePriority, deletePriority }
 }

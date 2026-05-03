@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Task, RecurrenceRule } from '@/types'
 import {
   getTasksByUser,
@@ -14,75 +14,60 @@ import {
 } from '@/services/taskService'
 
 export function useTasks(userId: string) {
-  const [tasks, setTasks] = useState<Task[]>(() => getTasksByUser(userId))
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(() => {
-    setTasks(getTasksByUser(userId))
+  const load = useCallback(async () => {
+    const data = await getTasksByUser(userId)
+    setTasks(data)
+    setLoading(false)
   }, [userId])
 
-  const createTask = useCallback(
-    (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const task = serviceCreate(data)
-      setTasks(getTasksByUser(userId))
-      return task
-    },
-    [userId]
-  )
+  useEffect(() => { load() }, [load])
 
-  const createRecurringTasks = useCallback(
-    (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>, rule: RecurrenceRule) => {
-      const created = serviceCreateRecurring(data, rule)
-      setTasks(getTasksByUser(userId))
-      return created
-    },
-    [userId]
-  )
+  const createTask = useCallback(async (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const task = await serviceCreate(data)
+    await load()
+    return task
+  }, [load])
 
-  const updateTask = useCallback(
-    (id: string, updates: Partial<Task>) => {
-      const task = serviceUpdate(id, updates)
-      setTasks(getTasksByUser(userId))
-      return task
-    },
-    [userId]
-  )
+  const createRecurringTasks = useCallback(async (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>, rule: RecurrenceRule) => {
+    const created = await serviceCreateRecurring(data, rule)
+    await load()
+    return created
+  }, [load])
 
-  const updateAllInSeries = useCallback(
-    (recurringGroupId: string, updates: Partial<Task>) => {
-      serviceUpdateSeries(recurringGroupId, updates)
-      setTasks(getTasksByUser(userId))
-    },
-    [userId]
-  )
+  const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
+    const task = await serviceUpdate(id, updates)
+    await load()
+    return task
+  }, [load])
 
-  const deleteTask = useCallback(
-    (id: string) => {
-      serviceDelete(id)
-      setTasks(getTasksByUser(userId))
-    },
-    [userId]
-  )
+  const updateAllInSeries = useCallback(async (recurringGroupId: string, updates: Partial<Task>) => {
+    await serviceUpdateSeries(recurringGroupId, updates)
+    await load()
+  }, [load])
 
-  const deleteAllInSeries = useCallback(
-    (recurringGroupId: string) => {
-      serviceDeleteSeries(recurringGroupId)
-      setTasks(getTasksByUser(userId))
-    },
-    [userId]
-  )
+  const deleteTask = useCallback(async (id: string) => {
+    await serviceDelete(id)
+    await load()
+  }, [load])
 
-  const moveTask = useCallback(
-    (id: string, newDate: string | null, halfDay?: 'am' | 'pm') => {
-      const task = serviceMove(id, newDate, halfDay)
-      setTasks(getTasksByUser(userId))
-      return task
-    },
-    [userId]
-  )
+  const deleteAllInSeries = useCallback(async (recurringGroupId: string) => {
+    await serviceDeleteSeries(recurringGroupId)
+    await load()
+  }, [load])
+
+  const moveTask = useCallback(async (id: string, newDate: string | null, halfDay?: 'am' | 'pm') => {
+    const task = await serviceMove(id, newDate, halfDay)
+    await load()
+    return task
+  }, [load])
 
   return {
     tasks,
-    refresh,
+    loading,
+    refresh: load,
     createTask,
     createRecurringTasks,
     updateTask,

@@ -35,7 +35,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSave, existingNames
     if (user) {
       setName(user.name)
       setEmail(user.email)
-      setPassword(user.password)
+      setPassword(user.password ?? '')
       setRole(user.role)
       setShowPassword(true)
       setError('')

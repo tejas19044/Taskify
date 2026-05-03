@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CheckCircle2, Clock } from 'lucide-react'
 import { DailyBarChart } from './DailyBarChart'
 import { PriorityPieChart } from './PriorityPieChart'
@@ -62,7 +62,10 @@ export function DashboardPage() {
   const { settings } = useSettings(selectedUserId)
   const { labels } = usePriorityLabels(selectedUserId)
   const { priorities } = usePriorities(selectedUserId)
-  const allUsers = useMemo(() => getAllUsers().filter((u) => u.active), [])
+  const [allUsers, setAllUsers] = useState<import('@/types').User[]>([])
+  useEffect(() => {
+    getAllUsers().then((users) => setAllUsers(users.filter((u) => u.active)))
+  }, [])
 
   const { start, end } = useMemo(
     () => rangeToDateStrings(range, customStart || undefined, customEnd || undefined),

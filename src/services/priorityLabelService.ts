@@ -1,50 +1,46 @@
-// NOTE: Replace storageGet/storageSet with Supabase DB queries for production.
-
-import { storageGet, storageSet, STORAGE_KEYS } from '@/lib/storage'
+import { supabase } from '@/lib/supabase'
 import type { Label, PriorityLabel } from '@/types'
 
-function getLabels(): Label[] {
-  return storageGet<Label[]>(STORAGE_KEYS.PRIORITY_LABELS) ?? []
+type LabelRow = { id: string; user_id: string; name: string; color: string; created_at: string }
+
+function rowToLabel(r: LabelRow): Label {
+  return { id: r.id, userId: r.user_id, name: r.name, color: r.color, createdAt: r.created_at }
 }
 
-function saveLabels(labels: Label[]): void {
-  storageSet(STORAGE_KEYS.PRIORITY_LABELS, labels)
+export async function getLabelsByUser(userId: string): Promise<Label[]> {
+  const { data, error } = await supabase.from('labels').select('*')
+    .eq('user_id', userId).order('created_at')
+  if (error) throw error
+  return (data as LabelRow[]).map(rowToLabel)
 }
 
-export function getLabelsByUser(userId: string): Label[] {
-  return getLabels().filter((l) => l.userId === userId)
+export async function getLabelById(id: string): Promise<Label | null> {
+  const { data, error } = await supabase.from('labels').select('*').eq('id', id).single()
+  if (error || !data) return null
+  return rowToLabel(data as LabelRow)
 }
 
-export function getLabelById(id: string): Label | null {
-  return getLabels().find((l) => l.id === id) ?? null
+export async function createLabel(data: Omit<Label, 'id' | 'createdAt'>): Promise<Label> {
+  const { data: row, error } = await supabase.from('labels')
+    .insert({ user_id: data.userId, name: data.name, color: data.color }).select().single()
+  if (error) throw error
+  return rowToLabel(row as LabelRow)
 }
 
-export function createLabel(data: Omit<Label, 'id' | 'createdAt'>): Label {
-  const labels = getLabels()
-  const label: Label = {
-    ...data,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-  }
-  saveLabels([...labels, label])
-  return label
+export async function updateLabel(
+  id: string,
+  updates: Partial<Omit<Label, 'id' | 'userId' | 'createdAt'>>
+): Promise<Label> {
+  const { data: row, error } = await supabase.from('labels')
+    .update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return rowToLabel(row as LabelRow)
 }
 
-export function updateLabel(id: string, updates: Partial<Omit<Label, 'id' | 'userId' | 'createdAt'>>): Label {
-  const labels = getLabels()
-  const idx = labels.findIndex((l) => l.id === id)
-  if (idx === -1) throw new Error(`Label ${id} not found`)
-  const updated = { ...labels[idx], ...updates }
-  labels[idx] = updated
-  saveLabels(labels)
-  return updated
+export async function deleteLabel(id: string): Promise<void> {
+  const { error } = await supabase.from('labels').delete().eq('id', id)
+  if (error) throw error
 }
 
-export function deleteLabel(id: string): void {
-  saveLabels(getLabels().filter((l) => l.id !== id))
-}
-
-export function bulkSeedLabels(labels: PriorityLabel[]): void {
-  const existing = getLabels()
-  saveLabels([...existing, ...labels])
-}
+// Keep for type compatibility
+export type { PriorityLabel }

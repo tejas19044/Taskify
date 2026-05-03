@@ -21,7 +21,7 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     await new Promise((r) => setTimeout(r, 300)) // brief loading feel
-    const user = login(email.trim().toLowerCase(), password)
+    const user = await login(email.trim().toLowerCase(), password)
     setLoading(false)
     if (user) {
       router.replace('/board')

@@ -2,14 +2,15 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { User } from '@/types'
-import { getCurrentUser, login as serviceLogin, logout as serviceLogout } from '@/services/userService'
+import { supabase } from '@/lib/supabase'
+import { getUserById } from '@/services/userService'
 
 interface AuthContextValue {
   currentUser: User | null
   isLoading: boolean
-  login: (email: string, password: string) => User | null
-  logout: () => void
-  refreshUser: () => void
+  login: (email: string, password: string) => Promise<User | null>
+  logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -18,23 +19,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const refreshUser = useCallback(() => {
-    setCurrentUser(getCurrentUser())
+  const refreshUser = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) { setCurrentUser(null); return }
+    const profile = await getUserById(session.user.id)
+    setCurrentUser(profile)
   }, [])
 
   useEffect(() => {
-    setCurrentUser(getCurrentUser())
-    setIsLoading(false)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await getUserById(session.user.id)
+        setCurrentUser(profile)
+      }
+      setIsLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const profile = await getUserById(session.user.id)
+        setCurrentUser(profile)
+      } else {
+        setCurrentUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const login = useCallback((email: string, password: string): User | null => {
-    const user = serviceLogin(email, password)
-    if (user) setCurrentUser(user)
-    return user
+  const login = useCallback(async (email: string, password: string): Promise<User | null> => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error || !data.user) return null
+    const profile = await getUserById(data.user.id)
+    setCurrentUser(profile)
+    return profile
   }, [])
 
-  const logout = useCallback(() => {
-    serviceLogout()
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
     setCurrentUser(null)
   }, [])
 

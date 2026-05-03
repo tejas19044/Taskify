@@ -65,10 +65,12 @@ function taskToRow(task: Task, labels: Label[], priorities: Priority[]): string[
   ]
 }
 
-export function generateTasksCsv(userId: string, from: string, to: string): string {
-  const tasks = getTasksByUser(userId)
-  const labels = getLabelsByUser(userId)
-  const priorities = getPrioritiesByUser(userId)
+export async function generateTasksCsv(userId: string, from: string, to: string): Promise<string> {
+  const [tasks, labels, priorities] = await Promise.all([
+    getTasksByUser(userId),
+    getLabelsByUser(userId),
+    getPrioritiesByUser(userId),
+  ])
 
   const filtered = tasks.filter((t) => {
     if (t.scheduledDate === null) return true          // pending — always included

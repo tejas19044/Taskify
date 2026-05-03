@@ -1,24 +1,31 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { UserSettings } from '@/types'
 import { getSettings, updateSettings as serviceUpdate } from '@/services/settingsService'
 
+const DEFAULTS: UserSettings = {
+  userId: '', workingMode: '5-day', boardMode: 'current-week',
+  defaultDashboardRange: 'this-week', defaultDailyHours: 8, perDayOverrides: {},
+}
+
 export function useSettings(userId: string) {
-  const [settings, setSettings] = useState<UserSettings>(() => getSettings(userId))
+  const [settings, setSettings] = useState<UserSettings>({ ...DEFAULTS, userId })
+  const [loading, setLoading] = useState(true)
 
-  const updateSettings = useCallback(
-    (updates: Partial<UserSettings>) => {
-      const updated = serviceUpdate(userId, updates)
-      setSettings(updated)
-      return updated
-    },
-    [userId]
-  )
-
-  const refresh = useCallback(() => {
-    setSettings(getSettings(userId))
+  const load = useCallback(async () => {
+    const data = await getSettings(userId)
+    setSettings(data)
+    setLoading(false)
   }, [userId])
 
-  return { settings, updateSettings, refresh }
+  useEffect(() => { load() }, [load])
+
+  const updateSettings = useCallback(async (updates: Partial<UserSettings>) => {
+    const updated = await serviceUpdate(userId, updates)
+    setSettings(updated)
+    return updated
+  }, [userId])
+
+  return { settings, loading, updateSettings, refresh: load }
 }

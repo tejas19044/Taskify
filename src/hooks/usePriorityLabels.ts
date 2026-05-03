@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { PriorityLabel } from '@/types'
 import {
   getLabelsByUser,
@@ -10,37 +10,33 @@ import {
 } from '@/services/priorityLabelService'
 
 export function usePriorityLabels(userId: string) {
-  const [labels, setLabels] = useState<PriorityLabel[]>(() => getLabelsByUser(userId))
+  const [labels, setLabels] = useState<PriorityLabel[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(() => {
-    setLabels(getLabelsByUser(userId))
+  const load = useCallback(async () => {
+    const data = await getLabelsByUser(userId)
+    setLabels(data)
+    setLoading(false)
   }, [userId])
 
-  const createLabel = useCallback(
-    (data: Omit<PriorityLabel, 'id' | 'createdAt'>) => {
-      const label = serviceCreate(data)
-      setLabels(getLabelsByUser(userId))
-      return label
-    },
-    [userId]
-  )
+  useEffect(() => { load() }, [load])
 
-  const updateLabel = useCallback(
-    (id: string, updates: Partial<PriorityLabel>) => {
-      const label = serviceUpdate(id, updates)
-      setLabels(getLabelsByUser(userId))
-      return label
-    },
-    [userId]
-  )
+  const createLabel = useCallback(async (data: Omit<PriorityLabel, 'id' | 'createdAt'>) => {
+    const label = await serviceCreate(data)
+    await load()
+    return label
+  }, [load])
 
-  const deleteLabel = useCallback(
-    (id: string) => {
-      serviceDelete(id)
-      setLabels(getLabelsByUser(userId))
-    },
-    [userId]
-  )
+  const updateLabel = useCallback(async (id: string, updates: Partial<PriorityLabel>) => {
+    const label = await serviceUpdate(id, updates)
+    await load()
+    return label
+  }, [load])
 
-  return { labels, refresh, createLabel, updateLabel, deleteLabel }
+  const deleteLabel = useCallback(async (id: string) => {
+    await serviceDelete(id)
+    await load()
+  }, [load])
+
+  return { labels, loading, refresh: load, createLabel, updateLabel, deleteLabel }
 }
