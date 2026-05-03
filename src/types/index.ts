@@ -13,6 +13,7 @@ export interface RecurrenceRule {
 export interface Task {
   id: string
   userId: string
+  ticketNumber?: number       // sequential per-user ticket ID, assigned on create
   title: string
   description: string
   scheduledDate: string | null // YYYY-MM-DD, or null when unscheduled (Pending)

@@ -73,6 +73,9 @@ function TaskPreview({
           )}
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+          {task.ticketNumber != null && (
+            <span className="text-[10px] font-semibold text-slate-300">#{task.ticketNumber}</span>
+          )}
           {task.recurringGroupId && <Repeat className="h-3 w-3 text-slate-300" />}
           {priority && (
             <span
@@ -209,6 +212,7 @@ function TaskCardContent({
             {task.title}
           </p>
           <span className="ml-2 flex-shrink-0 text-[10px] font-semibold text-slate-400">
+            {task.ticketNumber != null && <span className="mr-1 text-slate-300">#{task.ticketNumber}</span>}
             {task.estimatedHours}h
           </span>
         </div>
@@ -240,6 +244,9 @@ function TaskCardContent({
                 </button>
               )}
               <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                {task.ticketNumber != null && (
+                  <span className="text-slate-300 font-medium">#{task.ticketNumber}</span>
+                )}
                 {task.recurringGroupId && <Repeat className="h-2.5 w-2.5 text-slate-300" />}
                 <Clock className="h-3 w-3" />
                 {task.estimatedHours}h

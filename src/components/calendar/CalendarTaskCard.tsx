@@ -40,6 +40,9 @@ export function CalendarTaskCard({ task, label, onClick }: CalendarTaskCardProps
             </span>
           ) : <span />}
           <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 flex-shrink-0">
+            {task.ticketNumber != null && (
+              <span className="text-slate-300 font-medium">#{task.ticketNumber}</span>
+            )}
             {task.recurringGroupId && <Repeat className="h-2.5 w-2.5 text-slate-300" />}
             <Clock className="h-3 w-3" />
             {task.estimatedHours}h

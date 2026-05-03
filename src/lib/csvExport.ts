@@ -23,6 +23,7 @@ function cell(v: string | number | boolean | null | undefined): string {
 }
 
 const HEADERS = [
+  'Ticket #',
   'Title',
   'Status',
   'Scheduled Date',
@@ -49,6 +50,7 @@ function taskToRow(task: Task, labels: Label[], priorities: Priority[]): string[
     : 'Scheduled'
 
   return [
+    task.ticketNumber != null ? String(task.ticketNumber) : '',
     task.title,
     status,
     task.scheduledDate ?? '',

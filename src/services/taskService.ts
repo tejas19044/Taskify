@@ -3,7 +3,7 @@ import { generateRecurringDates } from '@/lib/dateUtils'
 import type { Task, RecurrenceRule } from '@/types'
 
 type TaskRow = {
-  id: string; user_id: string; title: string; description: string
+  id: string; user_id: string; ticket_number: number | null; title: string; description: string
   scheduled_date: string | null; estimated_hours: number
   label_id: string | null; priority_id: string | null
   tags: string[]; reference_url: string | null
@@ -13,7 +13,9 @@ type TaskRow = {
 
 function rowToTask(r: TaskRow): Task {
   return {
-    id: r.id, userId: r.user_id, title: r.title,
+    id: r.id, userId: r.user_id,
+    ticketNumber: r.ticket_number ?? undefined,
+    title: r.title,
     description: r.description ?? '',
     scheduledDate: r.scheduled_date,
     estimatedHours: Number(r.estimated_hours),
@@ -25,6 +27,17 @@ function rowToTask(r: TaskRow): Task {
     completed: r.completed ?? false,
     createdAt: r.created_at, updatedAt: r.updated_at,
   }
+}
+
+async function nextTicketNumber(userId: string): Promise<number> {
+  const { data } = await supabase
+    .from('tasks')
+    .select('ticket_number')
+    .eq('user_id', userId)
+    .order('ticket_number', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return ((data as TaskRow | null)?.ticket_number ?? 0) + 1
 }
 
 function taskToRow(t: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) {
@@ -66,8 +79,9 @@ export async function getTaskById(id: string): Promise<Task | null> {
 }
 
 export async function createTask(data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+  const ticket_number = await nextTicketNumber(data.userId)
   const { data: row, error } = await supabase.from('tasks')
-    .insert(taskToRow(data)).select().single()
+    .insert({ ...taskToRow(data), ticket_number }).select().single()
   if (error) throw error
   return rowToTask(row as TaskRow)
 }
@@ -112,7 +126,11 @@ export async function createRecurringTasks(
   if (!base.scheduledDate) return []
   const groupId = crypto.randomUUID()
   const dates = generateRecurringDates(base.scheduledDate, rule)
-  const rows = dates.map((date) => taskToRow({ ...base, scheduledDate: date, recurringGroupId: groupId }))
+  const startTicket = await nextTicketNumber(base.userId)
+  const rows = dates.map((date, i) => ({
+    ...taskToRow({ ...base, scheduledDate: date, recurringGroupId: groupId }),
+    ticket_number: startTicket + i,
+  }))
   const { data, error } = await supabase.from('tasks').insert(rows).select()
   if (error) throw error
   return (data as TaskRow[]).map(rowToTask)

@@ -129,6 +129,13 @@ export function EditTaskDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto p-0">
           <form onSubmit={handleSubmit}>
+            {task.ticketNumber != null && (
+              <div className="px-8 pt-5 pb-0">
+                <span className="text-[11px] font-semibold tracking-widest text-slate-300 uppercase">
+                  Ticket #{task.ticketNumber}
+                </span>
+              </div>
+            )}
             {isTaskToday && onComplete && (
               <div className="flex justify-end px-8 pt-6 pb-0">
                 <Button
