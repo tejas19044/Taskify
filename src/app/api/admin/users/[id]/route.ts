@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 
 async function verifyAdmin(req: NextRequest) {
   const token = req.headers.get('Authorization')?.replace('Bearer ', '')
   if (!token) return null
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+  const { data: { user }, error } = await getSupabaseAdmin().auth.getUser(token)
   if (error || !user) return null
-  const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await getSupabaseAdmin().from('profiles').select('role').eq('id', user.id).single()
   return profile?.role === 'admin' ? user : null
 }
 
@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const authUpdates: { email?: string; password?: string } = {}
     if (updates.email) authUpdates.email = updates.email
     if (updates.password) authUpdates.password = updates.password
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(params.id, authUpdates)
+    const { error } = await getSupabaseAdmin().auth.admin.updateUserById(params.id, authUpdates)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (updates.role !== undefined) profileUpdates.role = updates.role
   if (updates.active !== undefined) profileUpdates.active = updates.active
 
-  const { data: profile, error: profileError } = await supabaseAdmin.from('profiles')
+  const { data: profile, error: profileError } = await getSupabaseAdmin().from('profiles')
     .update(profileUpdates).eq('id', params.id).select().single()
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 
@@ -46,7 +46,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const caller = await verifyAdmin(req)
   if (!caller) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(params.id)
+  const { error } = await getSupabaseAdmin().auth.admin.deleteUser(params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   return NextResponse.json({ success: true })
