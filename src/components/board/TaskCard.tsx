@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, Clock, ExternalLink, Repeat, Tag, Link } from 'lucide-react'
+import { Check, Clock, ExternalLink, Repeat, Link } from 'lucide-react'
 import type { Task, Label, Priority } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -13,9 +13,6 @@ const DESCRIPTION_THRESHOLD = 100
 const MIN_CARD_HEIGHT = 16
 const HOVER_DELAY_MS = 1000
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
 
 interface TaskCardProps {
   task: Task

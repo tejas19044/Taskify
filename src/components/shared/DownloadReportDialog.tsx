@@ -55,7 +55,7 @@ export function DownloadReportDialog({ open, onOpenChange, userId }: DownloadRep
           </div>
 
           {invalid && from && to && (
-            <p className="text-xs text-red-500">"From" date must be before "To" date.</p>
+            <p className="text-xs text-red-500">&ldquo;From&rdquo; date must be before &ldquo;To&rdquo; date.</p>
           )}
 
           <div className="flex justify-end gap-2">
