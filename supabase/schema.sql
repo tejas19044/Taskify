@@ -34,6 +34,7 @@ ALTER TABLE priorities DISABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  ticket_number INTEGER,
   title TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   scheduled_date DATE,
